@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Saryn — Nuke Défense/Survie",
+    "frame": "Saryn",
+    "category": "DPS",
+    "description": "Spores + Miasma pour nettoyer les vagues. Priorité Force/Portée. Indispensable sur les défenses Arbitration où les ennemis montent vite en niveau.",
+    "mods": "Umbral Intensify, Stretch, Overextended, Umbral Vitality, Adaptation, Molt Augmented, Regenerative Molt, Natural Talent",
+    "arcanes": "Arcane Energize, Arcane Guardian"
+  },
+  {
+    "name": "Octavia — Immortelle AFK-proof",
+    "frame": "Octavia",
+    "category": "Survie longue",
+    "description": "Mallet + Resonator font le travail pendant que l'invisibilité de Metronome vous protège. Le choix le plus sûr pour les très longues survies Arbitration (la mort = fin de run).",
+    "mods": "Umbral Intensify, Augur Reach, Stretch, Constitution, Primed Continuity, Adaptation, Vitality, Streamline",
+    "arcanes": "Arcane Energize, Molt Augmented"
+  },
+  {
+    "name": "Wisp — Support/Buffer",
+    "frame": "Wisp",
+    "category": "Support",
+    "description": "Motes Vitalité + Vitesse pour toute l'équipe, indispensable en groupe. Le heal passif compense l'absence de Vazarin. Breach Surge scale très bien à haut niveau.",
+    "mods": "Umbral Intensify, Primed Continuity, Augur Message, Stretch, Adaptation, Umbral Vitality, Natural Talent, Streamline",
+    "arcanes": "Arcane Energize, Arcane Guardian"
+  },
+  {
+    "name": "Khora — Récolte + CC",
+    "frame": "Khora",
+    "category": "DPS / Loot",
+    "description": "Whipclaw scale à l'infini, Strangledome regroupe et immobilise. Avec Pilfering Strangledome, double le loot de Vitus Essence sur les survies.",
+    "mods": "Pilfering Strangledome, Umbral Intensify, Blind Rage, Stretch, Primed Continuity, Adaptation, Vitality, Streamline",
+    "arcanes": "Arcane Energize, Arcane Avenger"
+  },
+  {
+    "name": "Nekros — Desecrate Loot",
+    "frame": "Nekros",
+    "category": "Loot",
+    "description": "Despoil + Desecrate pour maximiser la Vitus Essence et l'énergie de l'équipe sur les survies Arbitration. Shield of Shadows pour la tankiness.",
+    "mods": "Despoil, Shield of Shadows, Umbral Intensify, Primed Continuity, Equilibrium, Health Conversion, Adaptation, Umbral Vitality",
+    "arcanes": "Arcane Guardian, Arcane Grace"
+  },
+  {
+    "name": "Frost — Défense d'objectif",
+    "frame": "Frost",
+    "category": "Défense",
+    "description": "Globe de glace pour protéger l'objectif sur les défenses/excavations. Biting Frost et Icy Avalanche scale bien ; l'armor strip de l'Avalanche reste utile à tout niveau.",
+    "mods": "Icy Avalanche, Umbral Intensify, Blind Rage, Stretch, Primed Continuity, Adaptation, Umbral Vitality, Streamline",
+    "arcanes": "Arcane Energize, Arcane Guardian"
+  },
+  {
+    "name": "Focus & Conseils généraux Arbitration",
+    "frame": "—",
+    "category": "Général",
+    "description": "Pas de résurrection classique : ramassez les jetons de revive sur les drones. Les Drones d'Arbitration rendent les ennemis proches invulnérables : tuez-les en priorité (arme hitscan précise). Une seule rotation de récompense par intervalle (rotation A toutes les 10 vagues/10 min). Emmenez un frame que vous maîtrisez : la mort coûte cher.",
+    "mods": "Adaptation quasi obligatoire ; évitez les builds papier.",
+    "arcanes": "Magus Repair (opérateur) pour compenser l'absence de heals."
+  }
+]
