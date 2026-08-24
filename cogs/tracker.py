@@ -51,10 +51,7 @@ class TrackerCog(commands.Cog):
 
     async def _build_embed(self, guild_id: int) -> tuple[discord.Embed, str]:
         overrides = storage.load_guild(guild_id).get("tiers", {})
-        current = await worldstate.fetch_current(self.session)
-        schedule_current, upcoming = await worldstate.fetch_schedule(self.session)
-        if current is None:
-            current = schedule_current  # repli : planning communautaire
+        current, upcoming = await worldstate.get_current_and_upcoming(self.session)
 
         embed = theme.make_embed(
             "⚖️ Suivi des Arbitrations",
@@ -208,15 +205,9 @@ class TrackerCog(commands.Cog):
         summary = await worldstate.inspect_schedule(self.session)
         embed.add_field(name="🧠 Planning interprété par le bot", value=f"```{summary[:1000]}```", inline=False)
 
-        discovery = await worldstate.discover_browse(self.session)
-        embed.add_field(
-            name="🔎 Découverte browse.wf",
-            value=f"```{discovery[:1000]}```\n*Rapport complet en pièce jointe.*",
-            inline=False,
-        )
         report = "\n\n".join(
             [f"== {name} ==\n{url}\n{verdict}" for name, url, verdict in results]
-            + [f"== Planning interprété ==\n{summary}", f"== Découverte browse.wf ==\n{discovery}"]
+            + [f"== Planning interprété ==\n{summary}"]
         )
         file = discord.File(io.BytesIO(report.encode("utf-8")), filename="diagnostic-sources.txt")
         await interaction.followup.send(embed=embed, file=file, ephemeral=True)
