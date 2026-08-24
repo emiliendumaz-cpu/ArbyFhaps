@@ -16,10 +16,17 @@ def _guild_file(guild_id: int) -> Path:
 
 def load_guild(guild_id: int) -> dict:
     path = _guild_file(guild_id)
+    data = {}
     if path.exists():
-        with path.open(encoding="utf-8") as f:
-            return json.load(f)
-    return {"maps": {}, "builds": []}
+        try:
+            with path.open(encoding="utf-8") as f:
+                data = json.load(f)
+        except json.JSONDecodeError:
+            data = {}
+    # Clés garanties, même sur un fichier d'une ancienne version ou corrompu
+    data.setdefault("maps", {})
+    data.setdefault("builds", [])
+    return data
 
 
 def save_guild(guild_id: int, data: dict) -> None:

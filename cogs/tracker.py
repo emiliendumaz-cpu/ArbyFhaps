@@ -145,7 +145,13 @@ class TrackerCog(commands.Cog):
         await interaction.response.defer(thinking=True, ephemeral=True)
         lang = i18n.user_lang(interaction.user.id)
         embed, fingerprint = await self._build_embed(interaction.guild_id, lang)
-        message = await interaction.channel.send(embed=embed)
+        try:
+            message = await interaction.channel.send(embed=embed)
+        except discord.Forbidden:
+            await interaction.followup.send(
+                embed=theme.error_embed(i18n.t(lang, "tr.noperm"), lang), ephemeral=True
+            )
+            return
         data = storage.load_guild(interaction.guild_id)
         data["tracker"] = {"channel_id": interaction.channel_id, "message_id": message.id, "lang": lang}
         storage.save_guild(interaction.guild_id, data)
@@ -233,6 +239,11 @@ class TrackerCog(commands.Cog):
 
     @tier_set.autocomplete("node")
     async def tier_node_autocomplete(self, interaction: discord.Interaction, current: str):
+        # L'autocomplétion doit répondre en < 3 s : si le planning n'est pas
+        # encore en cache (premier démarrage), on ne déclenche pas son
+        # téléchargement ici — la commande reste utilisable en saisie libre
+        if not worldstate._schedule_cache.get("entries"):
+            return []
         nodes = await worldstate.known_nodes(self.session)
         current_lower = current.lower()
         return [

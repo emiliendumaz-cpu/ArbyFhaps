@@ -326,7 +326,10 @@ async def probe_sources(session: aiohttp.ClientSession) -> list[tuple[str, str, 
     results = []
     for name, url in DIAGNOSTIC_URLS:
         try:
-            async with session.get(url, timeout=TIMEOUT) as resp:
+            # BIG_TIMEOUT : plusieurs de ces fichiers pèsent des Mo — un probe qui
+            # expirerait à 15 s ferait croire à une panne alors que le vrai
+            # pipeline (lui aussi en BIG_TIMEOUT) fonctionne
+            async with session.get(url, timeout=BIG_TIMEOUT) as resp:
                 body = (await resp.text())[:180].replace("\n", " ")
                 results.append((name, url, f"HTTP {resp.status} — {body}"))
         except Exception as exc:

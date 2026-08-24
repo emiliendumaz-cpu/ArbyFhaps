@@ -29,12 +29,17 @@ class ArbyBot(commands.Bot):
         for cog in COGS:
             await self.load_extension(cog)
 
-        guild_id = os.getenv("GUILD_ID")
-        if guild_id:
+        guild_id = (os.getenv("GUILD_ID") or "").strip()
+        if guild_id.isdigit():
             guild = discord.Object(id=int(guild_id))
             self.tree.copy_global_to(guild=guild)
             await self.tree.sync(guild=guild)
         else:
+            if guild_id:
+                logging.warning(
+                    "GUILD_ID « %s » invalide (un identifiant de serveur est numérique) : "
+                    "synchronisation globale utilisée.", guild_id
+                )
             await self.tree.sync()
 
     async def on_ready(self):

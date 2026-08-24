@@ -180,6 +180,11 @@ _CATALOG: dict[str, dict[str, str]] = {
     },
     "tr.stopped": {"fr": "🗑️ Tracker arrêté", "en": "🗑️ Tracker stopped", "no": "🗑️ Oversikt stoppet"},
     "tr.noactive": {"fr": "Aucun tracker actif sur ce serveur.", "en": "No active tracker on this server.", "no": "Ingen aktiv oversikt på denne serveren."},
+    "tr.noperm": {
+        "fr": "Je n'ai pas la permission d'envoyer des messages dans ce salon.",
+        "en": "I don't have permission to send messages in this channel.",
+        "no": "Jeg har ikke tillatelse til å sende meldinger i denne kanalen.",
+    },
     "tr.tierset": {"fr": "✅ {emoji} {node} noté {tier}", "en": "✅ {emoji} {node} rated {tier}", "no": "✅ {emoji} {node} vurdert til {tier}"},
     "tr.tierset.desc": {
         "fr": "La note sera appliquée à la prochaine actualisation du tracker.",

@@ -30,6 +30,8 @@ _ERROR_MARKERS = ("that's an error", "that’s an error", "error 500", "please t
 
 # Codes de langue de MyMemory (traducteur de secours quand Google refuse)
 _MYMEMORY_CODES = {"fr": "fr-FR", "en": "en-GB", "no": "nb-NO"}  # nb-NO = bokmål
+# MyMemory refuse les requêtes de 500 caractères et plus ; marge pour l'encodage UTF-8
+_MYMEMORY_MAX = 450
 
 
 def _looks_broken(original: str, translated: str) -> bool:
@@ -77,18 +79,50 @@ def _iter_translators(lang: str):
 
     Google bloque parfois son endpoint gratuit (« Error 500 ») selon l'IP ;
     MyMemory est une API officielle au quota journalier modeste — largement
-    suffisant grâce au cache.
+    suffisant grâce au cache. Chaque élément : (nom, traducteur, taille max
+    d'une requête ou None). Chaque construction est protégée : l'échec de
+    l'une ne prive pas de la suivante.
     """
-    from deep_translator import GoogleTranslator
+    try:
+        from deep_translator import GoogleTranslator
 
-    yield "Google", GoogleTranslator(source="auto", target=_GOOGLE_CODES.get(lang, lang))
+        yield "Google", GoogleTranslator(source="auto", target=_GOOGLE_CODES.get(lang, lang)), None
+    except Exception as exc:
+        log.debug("Google indisponible : %s", exc)
     try:
         from deep_translator import MyMemoryTranslator
 
         # Les textes des admins sont rédigés en français
-        yield "MyMemory", MyMemoryTranslator(source="fr-FR", target=_MYMEMORY_CODES.get(lang, lang))
+        yield ("MyMemory",
+               MyMemoryTranslator(source="fr-FR", target=_MYMEMORY_CODES.get(lang, lang)),
+               _MYMEMORY_MAX)
     except Exception as exc:
         log.debug("MyMemory indisponible : %s", exc)
+
+
+def _split_line(line: str, limit: int | None) -> list[str]:
+    """Découpe une ligne trop longue pour un traducteur, de préférence aux
+    frontières de phrases puis de mots. Sans limite (ou ligne assez courte),
+    la ligne est renvoyée telle quelle."""
+    if limit is None or len(line) <= limit:
+        return [line]
+    chunks: list[str] = []
+    rest = line
+    while len(rest) > limit:
+        cut = -1
+        for sep in (". ", "! ", "? ", "; ", ", ", " "):
+            cut = rest.rfind(sep, 1, limit)
+            if cut != -1:
+                cut += len(sep)
+                break
+        if cut <= 0:
+            cut = limit
+        if rest[:cut].strip():
+            chunks.append(rest[:cut].strip())
+        rest = rest[cut:]
+    if rest.strip():
+        chunks.append(rest.strip())
+    return chunks
 
 
 def _translate_sync(text: str, lang: str) -> str:
@@ -99,20 +133,23 @@ def _translate_sync(text: str, lang: str) -> str:
     échouent, l'appelant affiche le texte original et ne met rien en cache.
     """
     last_error: Exception | None = None
-    for name, translator in _iter_translators(lang):
+    for name, translator, limit in _iter_translators(lang):
         try:
             out: list[str] = []
             for line in text.split("\n"):
                 if not line.strip():
                     out.append(line)
                     continue
-                translated = translator.translate(line)
-                if not translated or not isinstance(translated, str):
-                    out.append(line)
-                    continue
-                if _looks_broken(line, translated):
-                    raise ValueError(f"réponse suspecte ({name}) : {translated[:80]!r}")
-                out.append(translated)
+                parts: list[str] = []
+                for piece in _split_line(line, limit):
+                    translated = translator.translate(piece)
+                    if not translated or not isinstance(translated, str):
+                        parts.append(piece)
+                        continue
+                    if _looks_broken(piece, translated):
+                        raise ValueError(f"réponse suspecte ({name}) : {translated[:80]!r}")
+                    parts.append(translated)
+                out.append(parts[0] if len(parts) == 1 else " ".join(parts))
             if name != "Google":
                 log.info("Traduction assurée par %s (Google indisponible)", name)
             return "\n".join(out)

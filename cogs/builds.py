@@ -74,8 +74,17 @@ class BuildsPaginator(discord.ui.View):
         self.builds = builds
         self.lang = lang
         self.index = 0
+        self.message: discord.Message | None = None
         self.previous.label = i18n.t(lang, "b.prev")
         self.next.label = i18n.t(lang, "b.next")
+
+    async def on_timeout(self):
+        # Boutons expirés : on les retire au lieu de laisser des clics en échec
+        if self.message:
+            try:
+                await self.message.edit(view=None)
+            except discord.HTTPException:
+                pass
 
     async def current(self) -> tuple[discord.Embed, discord.File | None]:
         return await _build_embed(self.builds[self.index], self.index, len(self.builds), self.lang)
@@ -123,9 +132,9 @@ class BuildsCog(commands.Cog):
         view = BuildsPaginator(builds, lang)
         embed, file = await view.current()
         if file:
-            await interaction.followup.send(embed=embed, view=view, file=file)
+            view.message = await interaction.followup.send(embed=embed, view=view, file=file, wait=True)
         else:
-            await interaction.followup.send(embed=embed, view=view)
+            view.message = await interaction.followup.send(embed=embed, view=view, wait=True)
 
     @builds.autocomplete("categorie")
     async def category_autocomplete(self, interaction: discord.Interaction, current: str):
