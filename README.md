@@ -5,13 +5,14 @@ Bot Discord dédié à l'**Arbitration** sur Warframe : analyse de runs via le f
 ## Fonctionnalités
 
 ### 📊 `/analyse` — Analyse d'un run
-Uploadez votre fichier `EE.log` (sur Windows : `%LOCALAPPDATA%\Warframe\EE.log`) et le bot en extrait un résumé :
+Uploadez votre fichier `EE.log` (sur Windows : `%LOCALAPPDATA%\Warframe\EE.log`) et le bot génère un **dashboard image** (style sombre/or) :
 
-- Mission détectée et type (Arbitration ou non)
-- Durée de la session
-- Joueurs de l'escouade (pseudos en jeu uniquement)
-- Migrations d'hôte, arrivées/départs d'escouade
-- Warnings/erreurs moteur
+- Tuiles de stats : ennemis apparus, kills par drone, intervalle drone moyen, drones tués, Vitus par minute, durée totale
+- Table de probabilité de Vitus (pire cas → roll divin) avec le percentile de votre run
+- Saturation ennemis : % du temps passé à chaque nombre d'ennemis vivants
+- Drones et spawns par intervalle (graphiques avec moyenne)
+
+Si le log ne contient pas les événements de spawn, le bot renvoie un résumé simple en embed : mission, durée, joueurs (pseudos en jeu uniquement), migrations d'hôte, arrivées/départs, warnings/erreurs moteur.
 
 **🔒 Confidentialité — le log est trié avant analyse :** les adresses IP (v4/v6), ports, IDs de compte/GUID, adresses MAC, le login du compte et les chemins système contenant le nom d'utilisateur Windows sont **supprimés du texte avant toute analyse**. Le fichier n'est **jamais stocké** : il est lu en mémoire, analysé, puis oublié. Il est donc impossible de récupérer l'IP d'un joueur via le bot.
 

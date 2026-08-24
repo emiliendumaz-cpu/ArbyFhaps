@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
+import io
+
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import eelog, theme
+from utils import dashboard, eelog, theme
 
 
 class AnalyzeCog(commands.Cog):
@@ -41,6 +44,27 @@ class AnalyzeCog(commands.Cog):
         report = eelog.parse(raw)
         del raw  # le contenu brut n'est jamais conservé
 
+        # Log riche (événements de spawn présents) → dashboard image façon « arbi analyzer »
+        if report.has_spawn_data:
+            png = await asyncio.to_thread(dashboard.render, report)
+            file = discord.File(io.BytesIO(png), filename="analyse-arbitration.png")
+            embed = theme.make_embed(
+                "📊 Analyse du run",
+                "🔒 *Fichier anonymisé avant analyse : IPs, ports, IDs de compte et "
+                "chemins système supprimés. Rien n'est stocké.*",
+                color=theme.GOLD if report.is_arbitration else theme.BLUE,
+                footer_extra=f"{report.lines} lignes analysées",
+            )
+            if report.players:
+                embed.add_field(
+                    name="👥 Joueurs (pseudos en jeu)",
+                    value=" • ".join(f"`{p}`" for p in report.players),
+                    inline=False,
+                )
+            embed.set_image(url="attachment://analyse-arbitration.png")
+            await interaction.followup.send(embed=embed, file=file)
+            return
+
         is_arby = report.is_arbitration
         embed = theme.make_embed(
             "📊 Analyse du run",
@@ -60,6 +84,14 @@ class AnalyzeCog(commands.Cog):
             )
         embed.add_field(name="📥 Arrivées / 📤 Départs", value=f"{report.joins} / {report.leaves}", inline=True)
         embed.add_field(name="⚠️ Warnings / 🛑 Erreurs", value=f"{report.warnings} / {report.errors}", inline=True)
+        embed.add_field(
+            name="ℹ️ Dashboard détaillé indisponible",
+            value=(
+                "*Ce log ne contient pas d'événements de spawn (spawns, drones, saturation). "
+                "Le dashboard complet s'affiche automatiquement quand ils sont présents.*"
+            ),
+            inline=False,
+        )
         embed.add_field(
             name="🔒 Confidentialité",
             value=(

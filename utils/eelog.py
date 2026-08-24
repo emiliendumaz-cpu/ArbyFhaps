@@ -44,6 +44,10 @@ def sanitize(text: str) -> str:
 # Parsing
 # ---------------------------------------------------------------------------
 
+SATURATION_BUCKETS = ["0-2", "3-5", "6-8", "9-11", "12-14", "15-17", "18-20", "21-23", "24-26", "27+"]
+N_INTERVALS = 5
+
+
 @dataclass
 class RunReport:
     mission: str | None = None
@@ -56,6 +60,35 @@ class RunReport:
     warnings: int = 0
     errors: int = 0
     lines: int = 0
+    # Statistiques de spawn (présentes si le log contient les événements d'agents)
+    total_spawns: int = 0
+    drones_spawned: int = 0
+    drones_killed: int = 0
+    vitus_pickups: int = 0
+    waves: int = 0
+    saturation: dict[str, float] = field(default_factory=dict)  # bucket -> % du temps
+    interval_drones: list[int] = field(default_factory=list)
+    interval_spawns: list[int] = field(default_factory=list)
+
+    @property
+    def has_spawn_data(self) -> bool:
+        return self.total_spawns > 0
+
+    @property
+    def kills_per_drone(self) -> float | None:
+        return self.total_spawns / self.drones_killed if self.drones_killed else None
+
+    @property
+    def avg_drone_interval_s(self) -> float | None:
+        if self.drones_killed and self.duration_s:
+            return self.duration_s / self.drones_killed
+        return None
+
+    @property
+    def vitus_per_minute(self) -> float | None:
+        if self.vitus_pickups and self.duration_s:
+            return self.vitus_pickups / (self.duration_s / 60)
+        return None
 
     @property
     def duration_text(self) -> str:
@@ -78,6 +111,12 @@ _HOST_MIGRATION_RE = re.compile(r"host migration", re.IGNORECASE)
 _JOIN_RE = re.compile(r"^(?:Script \[Info\]:\s*)?.*?(\S+)\s+(?:a rejoint|has joined|joined squad)", re.IGNORECASE)
 _LEAVE_RE = re.compile(r"(?:has left|a quitté|left squad)", re.IGNORECASE)
 _PLAYER_NAME_RE = re.compile(r"ThemedSquadOverlay\.lua:\s*(\S+?)\s+(?:has joined|joined|a rejoint)", re.IGNORECASE)
+# Événements d'agents (spawn/mort des ennemis) — plusieurs variantes selon les versions du jeu
+_AGENT_CREATED_RE = re.compile(r"(?:OnAgentCreated|AgentCreated|CreateAgent)\s+(/\S+)", re.IGNORECASE)
+_AGENT_DESTROYED_RE = re.compile(r"(?:OnAgentDestroyed|AgentDestroyed|DestroyAgent)\s+(/\S+)", re.IGNORECASE)
+_DRONE_RE = re.compile(r"drone", re.IGNORECASE)
+_VITUS_RE = re.compile(r"VitusEssence", re.IGNORECASE)
+_WAVE_RE = re.compile(r"\bwave\s+(\d+)\b", re.IGNORECASE)
 
 
 def parse(raw_text: str) -> RunReport:
@@ -88,6 +127,9 @@ def parse(raw_text: str) -> RunReport:
     first_ts: float | None = None
     last_ts: float | None = None
     players: list[str] = []
+    # Événements (timestamp, delta_vivants, est_un_drone, est_une_mort)
+    agent_events: list[tuple[float, int, bool]] = []
+    current_ts: float | None = None
 
     for line in text.splitlines():
         report.lines += 1
@@ -98,11 +140,35 @@ def parse(raw_text: str) -> RunReport:
             if first_ts is None:
                 first_ts = ts
             last_ts = ts
+            current_ts = ts
             level = m.group(2).lower()
             if level == "warning":
                 report.warnings += 1
             elif level == "error":
                 report.errors += 1
+
+        cm = _AGENT_CREATED_RE.search(line)
+        dm = None if cm else _AGENT_DESTROYED_RE.search(line)
+        if cm or dm:
+            path = (cm or dm).group(1)
+            is_drone = bool(_DRONE_RE.search(path))
+            if cm:
+                if is_drone:
+                    report.drones_spawned += 1
+                else:
+                    report.total_spawns += 1
+            else:
+                if is_drone:
+                    report.drones_killed += 1
+            if current_ts is not None:
+                agent_events.append((current_ts, 1 if cm else -1, is_drone))
+
+        if _VITUS_RE.search(line):
+            report.vitus_pickups += 1
+
+        wm = _WAVE_RE.search(line)
+        if wm:
+            report.waves = max(report.waves, int(wm.group(1)))
 
         if report.mission is None:
             for mission_re in _MISSION_RES:
@@ -132,4 +198,45 @@ def parse(raw_text: str) -> RunReport:
         report.duration_s = last_ts - first_ts
 
     report.players = players[:8]
+    _compute_spawn_stats(report, agent_events)
     return report
+
+
+def _bucket_index(alive: int) -> int:
+    return min(alive // 3, len(SATURATION_BUCKETS) - 1)
+
+
+def _compute_spawn_stats(report: RunReport, events: list[tuple[float, int, bool]]) -> None:
+    """Saturation ennemis (% du temps par nombre d'ennemis vivants) et stats par intervalle."""
+    if not events:
+        return
+
+    t0, t1 = events[0][0], events[-1][0]
+    span = t1 - t0
+    if span <= 0:
+        return
+
+    # Saturation : temps passé à chaque palier d'ennemis vivants (drones exclus)
+    bucket_time = [0.0] * len(SATURATION_BUCKETS)
+    alive = 0
+    prev_ts = t0
+    for ts, delta, is_drone in events:
+        bucket_time[_bucket_index(alive)] += ts - prev_ts
+        prev_ts = ts
+        if not is_drone:
+            alive = max(0, alive + delta)
+    report.saturation = {
+        label: 100.0 * t / span for label, t in zip(SATURATION_BUCKETS, bucket_time)
+    }
+
+    # Découpage de la mission en intervalles égaux : spawns et drones tués par intervalle
+    interval_spawns = [0] * N_INTERVALS
+    interval_drones = [0] * N_INTERVALS
+    for ts, delta, is_drone in events:
+        idx = min(int((ts - t0) / span * N_INTERVALS), N_INTERVALS - 1)
+        if is_drone and delta == -1:
+            interval_drones[idx] += 1
+        elif not is_drone and delta == 1:
+            interval_spawns[idx] += 1
+    report.interval_spawns = interval_spawns
+    report.interval_drones = interval_drones
