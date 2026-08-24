@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import eelog
+from utils import eelog, theme
 
 
 class AnalyzeCog(commands.Cog):
@@ -21,14 +21,16 @@ class AnalyzeCog(commands.Cog):
     async def analyse(self, interaction: discord.Interaction, fichier: discord.Attachment):
         if fichier.size > eelog.MAX_LOG_BYTES:
             await interaction.response.send_message(
-                "❌ Fichier trop volumineux (max 30 Mo).", ephemeral=True
+                embed=theme.error_embed("Fichier trop volumineux (max 30 Mo)."), ephemeral=True
             )
             return
 
         name_lower = fichier.filename.lower()
         if not (name_lower.endswith(".log") or name_lower.endswith(".txt")):
             await interaction.response.send_message(
-                "❌ Merci d'envoyer un fichier `.log` ou `.txt` (le fichier EE.log de Warframe).",
+                embed=theme.error_embed(
+                    "Merci d'envoyer un fichier `.log` ou `.txt` (le fichier EE.log de Warframe)."
+                ),
                 ephemeral=True,
             )
             return
@@ -39,24 +41,33 @@ class AnalyzeCog(commands.Cog):
         report = eelog.parse(raw)
         del raw  # le contenu brut n'est jamais conservé
 
-        embed = discord.Embed(
-            title="📊 Analyse du run",
-            color=discord.Color.gold() if report.is_arbitration else discord.Color.blurple(),
-            description=(
-                "🔒 *Fichier anonymisé avant analyse : IPs, ports, IDs de compte, "
-                "adresses MAC et chemins système supprimés. Rien n'est stocké.*"
-            ),
+        is_arby = report.is_arbitration
+        embed = theme.make_embed(
+            "📊 Analyse du run",
+            f"{'⚖️ **Arbitration détectée**' if is_arby else '🎮 Mission standard'}\n{theme.SEPARATOR}",
+            color=theme.GOLD if is_arby else theme.BLUE,
+            footer_extra=f"{report.lines} lignes analysées",
         )
-        embed.add_field(name="Mission", value=report.mission or "Non détectée", inline=False)
-        embed.add_field(name="Type", value="⚖️ Arbitration" if report.is_arbitration else "Mission standard", inline=True)
-        embed.add_field(name="Durée de session", value=report.duration_text, inline=True)
-        embed.add_field(name="Migrations d'hôte", value=str(report.host_migrations), inline=True)
+        embed.add_field(name="🗺️ Mission", value=report.mission or "*Non détectée*", inline=True)
+        embed.add_field(name="⏱️ Durée de session", value=report.duration_text, inline=True)
+        embed.add_field(name="🔄 Migrations d'hôte", value=str(report.host_migrations), inline=True)
 
         if report.players:
-            embed.add_field(name="Joueurs détectés (pseudos en jeu)", value=", ".join(report.players), inline=False)
-        embed.add_field(name="Arrivées / départs d'escouade", value=f"{report.joins} / {report.leaves}", inline=True)
-        embed.add_field(name="Warnings / Erreurs moteur", value=f"{report.warnings} / {report.errors}", inline=True)
-        embed.set_footer(text=f"{report.lines} lignes analysées")
+            embed.add_field(
+                name="👥 Joueurs détectés (pseudos en jeu)",
+                value=" • ".join(f"`{p}`" for p in report.players),
+                inline=False,
+            )
+        embed.add_field(name="📥 Arrivées / 📤 Départs", value=f"{report.joins} / {report.leaves}", inline=True)
+        embed.add_field(name="⚠️ Warnings / 🛑 Erreurs", value=f"{report.warnings} / {report.errors}", inline=True)
+        embed.add_field(
+            name="🔒 Confidentialité",
+            value=(
+                "*Fichier anonymisé avant analyse : IPs, ports, IDs de compte, adresses MAC "
+                "et chemins système supprimés. Rien n'est stocké.*"
+            ),
+            inline=False,
+        )
 
         await interaction.followup.send(embed=embed)
 

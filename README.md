@@ -28,11 +28,18 @@ Chaque serveur Discord a sa propre configuration.
 - `/build-add` *(admin)* — ajoute un build personnalisé propre au serveur
 - `/build-remove` *(admin)* — supprime un build personnalisé
 
+### 📖 `/help`
+Affiche la liste de toutes les commandes du bot (réponse visible par vous seul).
+
 ## Installation
 
 1. Créez une application sur https://discord.com/developers/applications, ajoutez un **Bot** et copiez son token. Aucun intent privilégié n'est nécessaire.
 2. Invitez le bot avec le scope `applications.commands` + `bot` (permissions : Envoyer des messages, Intégrer des liens, Joindre des fichiers).
 3. Installez et lancez :
+
+**Windows — méthode simple :** double-cliquez sur `start.bat`. Il crée l'environnement, installe les dépendances et lance le bot automatiquement (il faut d'abord avoir créé le fichier `.env`, voir ci-dessous).
+
+**Méthode manuelle :**
 
 ```bash
 python -m venv .venv

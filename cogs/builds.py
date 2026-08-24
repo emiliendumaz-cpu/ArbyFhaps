@@ -6,22 +6,22 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import storage
+from utils import storage, theme
 
 
 def _build_embed(build: dict, index: int, total: int) -> discord.Embed:
-    embed = discord.Embed(
-        title=f"⚖️ {build['name']}",
-        description=build["description"],
-        color=discord.Color.gold(),
+    embed = theme.make_embed(
+        f"⚖️ {build['name']}",
+        f"{build['description']}\n{theme.SEPARATOR}",
+        color=theme.GOLD,
+        footer_extra=f"Build {index + 1}/{total}",
     )
-    embed.add_field(name="Warframe", value=build["frame"], inline=True)
-    embed.add_field(name="Catégorie", value=build["category"], inline=True)
+    embed.add_field(name="🤖 Warframe", value=build["frame"], inline=True)
+    embed.add_field(name="🏷️ Catégorie", value=build["category"], inline=True)
     if build.get("mods"):
-        embed.add_field(name="Mods", value=build["mods"], inline=False)
+        embed.add_field(name="🧩 Mods", value=build["mods"], inline=False)
     if build.get("arcanes"):
-        embed.add_field(name="Arcanes", value=build["arcanes"], inline=False)
-    embed.set_footer(text=f"Build {index + 1}/{total} — Arbitration")
+        embed.add_field(name="✨ Arcanes", value=build["arcanes"], inline=False)
     return embed
 
 
@@ -62,7 +62,8 @@ class BuildsCog(commands.Cog):
             builds = [b for b in builds if categorie.lower() in b["category"].lower()]
         if not builds:
             await interaction.response.send_message(
-                f"❌ Aucun build trouvé pour la catégorie « {categorie} ».", ephemeral=True
+                embed=theme.error_embed(f"Aucun build trouvé pour la catégorie « {categorie} »."),
+                ephemeral=True,
             )
             return
         view = BuildsPaginator(builds)
@@ -112,7 +113,9 @@ class BuildsCog(commands.Cog):
             }
         )
         storage.save_guild(interaction.guild_id, data)
-        await interaction.response.send_message(f"✅ Build **{nom}** ({frame}) ajouté.")
+        await interaction.response.send_message(
+            embed=theme.make_embed(f"✅ Build ajouté : {nom} ({frame})", color=theme.GREEN)
+        )
 
     @app_commands.command(name="build-remove", description="(Admin) Supprime un build personnalisé du serveur.")
     @app_commands.describe(nom="Nom du build à supprimer")
@@ -123,12 +126,16 @@ class BuildsCog(commands.Cog):
         data["builds"] = [b for b in data.get("builds", []) if b["name"].lower() != nom.lower()]
         if len(data["builds"]) == before:
             await interaction.response.send_message(
-                f"❌ Build **{nom}** introuvable (les builds par défaut ne peuvent pas être supprimés).",
+                embed=theme.error_embed(
+                    f"Build **{nom}** introuvable (les builds par défaut ne peuvent pas être supprimés)."
+                ),
                 ephemeral=True,
             )
             return
         storage.save_guild(interaction.guild_id, data)
-        await interaction.response.send_message(f"🗑️ Build **{nom}** supprimé.")
+        await interaction.response.send_message(
+            embed=theme.make_embed(f"🗑️ Build supprimé : {nom}", color=theme.GREEN)
+        )
 
 
 async def setup(bot: commands.Bot):
