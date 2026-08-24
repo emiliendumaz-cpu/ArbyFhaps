@@ -24,6 +24,20 @@ MAX_CHARS = 4500  # limite Google ~5000 ; nos textes sont bien plus courts
 _cache: dict[str, str] | None = None
 
 
+# Fragments typiques d'une page d'erreur renvoyée à la place d'une traduction
+_ERROR_MARKERS = ("that's an error", "that’s an error", "error 500", "please try again later")
+
+
+def _looks_broken(original: str, translated: str) -> bool:
+    low = translated.lower()
+    if any(marker in low for marker in _ERROR_MARKERS):
+        return True
+    # Longueur aberrante : une vraie traduction reste du même ordre de grandeur
+    if len(original) >= 40 and not (len(original) // 5 <= len(translated) <= len(original) * 3):
+        return True
+    return False
+
+
 def _load_cache() -> dict[str, str]:
     global _cache
     if _cache is None:
@@ -32,6 +46,17 @@ def _load_cache() -> dict[str, str]:
                 _cache = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             _cache = {}
+        # Auto-nettoyage : purge les pages d'erreur mises en cache par erreur
+        broken = [k for k, v in _cache.items()
+                  if any(m in str(v).lower() for m in _ERROR_MARKERS)]
+        if broken:
+            for k in broken:
+                del _cache[k]
+            log.warning("Cache de traduction : %d entrées corrompues purgées", len(broken))
+            try:
+                _save_cache()
+            except OSError:
+                pass
     return _cache
 
 
@@ -44,9 +69,26 @@ def _save_cache() -> None:
 
 
 def _translate_sync(text: str, lang: str) -> str:
+    """Traduit ligne par ligne : requêtes courtes (Google tolère mal les gros
+    blocs multilignes) et structure markdown préservée. Toute réponse suspecte
+    fait échouer l'ensemble — le texte original sera affiché, rien n'est caché.
+    """
     from deep_translator import GoogleTranslator
 
-    return GoogleTranslator(source="auto", target=_GOOGLE_CODES.get(lang, lang)).translate(text)
+    translator = GoogleTranslator(source="auto", target=_GOOGLE_CODES.get(lang, lang))
+    out: list[str] = []
+    for line in text.split("\n"):
+        if not line.strip():
+            out.append(line)
+            continue
+        translated = translator.translate(line)
+        if not translated or not isinstance(translated, str):
+            out.append(line)
+            continue
+        if _looks_broken(line, translated):
+            raise ValueError(f"réponse suspecte du traducteur : {translated[:80]!r}")
+        out.append(translated)
+    return "\n".join(out)
 
 
 async def tr(text: str | None, lang: str) -> str | None:
