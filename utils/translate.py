@@ -25,7 +25,11 @@ _cache: dict[str, str] | None = None
 
 
 # Fragments typiques d'une page d'erreur renvoyée à la place d'une traduction
-_ERROR_MARKERS = ("that's an error", "that’s an error", "error 500", "please try again later")
+_ERROR_MARKERS = ("that's an error", "that’s an error", "error 500", "please try again later",
+                  "mymemory warning")
+
+# Codes de langue de MyMemory (traducteur de secours quand Google refuse)
+_MYMEMORY_CODES = {"fr": "fr-FR", "en": "en-GB", "no": "nb-NO"}  # nb-NO = bokmål
 
 
 def _looks_broken(original: str, translated: str) -> bool:
@@ -68,27 +72,54 @@ def _save_cache() -> None:
         json.dump(_cache, f, ensure_ascii=False, indent=1)
 
 
-def _translate_sync(text: str, lang: str) -> str:
-    """Traduit ligne par ligne : requêtes courtes (Google tolère mal les gros
-    blocs multilignes) et structure markdown préservée. Toute réponse suspecte
-    fait échouer l'ensemble — le texte original sera affiché, rien n'est caché.
+def _iter_translators(lang: str):
+    """Chaîne de traducteurs : Google (rapide) puis MyMemory (secours sans clé).
+
+    Google bloque parfois son endpoint gratuit (« Error 500 ») selon l'IP ;
+    MyMemory est une API officielle au quota journalier modeste — largement
+    suffisant grâce au cache.
     """
     from deep_translator import GoogleTranslator
 
-    translator = GoogleTranslator(source="auto", target=_GOOGLE_CODES.get(lang, lang))
-    out: list[str] = []
-    for line in text.split("\n"):
-        if not line.strip():
-            out.append(line)
-            continue
-        translated = translator.translate(line)
-        if not translated or not isinstance(translated, str):
-            out.append(line)
-            continue
-        if _looks_broken(line, translated):
-            raise ValueError(f"réponse suspecte du traducteur : {translated[:80]!r}")
-        out.append(translated)
-    return "\n".join(out)
+    yield "Google", GoogleTranslator(source="auto", target=_GOOGLE_CODES.get(lang, lang))
+    try:
+        from deep_translator import MyMemoryTranslator
+
+        # Les textes des admins sont rédigés en français
+        yield "MyMemory", MyMemoryTranslator(source="fr-FR", target=_MYMEMORY_CODES.get(lang, lang))
+    except Exception as exc:
+        log.debug("MyMemory indisponible : %s", exc)
+
+
+def _translate_sync(text: str, lang: str) -> str:
+    """Traduit ligne par ligne : requêtes courtes et markdown préservé.
+
+    Chaque traducteur de la chaîne est essayé en entier ; une réponse suspecte
+    (page d'erreur, longueur aberrante) fait passer au suivant. Si tous
+    échouent, l'appelant affiche le texte original et ne met rien en cache.
+    """
+    last_error: Exception | None = None
+    for name, translator in _iter_translators(lang):
+        try:
+            out: list[str] = []
+            for line in text.split("\n"):
+                if not line.strip():
+                    out.append(line)
+                    continue
+                translated = translator.translate(line)
+                if not translated or not isinstance(translated, str):
+                    out.append(line)
+                    continue
+                if _looks_broken(line, translated):
+                    raise ValueError(f"réponse suspecte ({name}) : {translated[:80]!r}")
+                out.append(translated)
+            if name != "Google":
+                log.info("Traduction assurée par %s (Google indisponible)", name)
+            return "\n".join(out)
+        except Exception as exc:
+            last_error = exc
+            log.warning("Traducteur %s en échec : %s", name, exc)
+    raise last_error if last_error else RuntimeError("aucun traducteur disponible")
 
 
 async def tr(text: str | None, lang: str) -> str | None:
