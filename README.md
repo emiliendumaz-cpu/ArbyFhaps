@@ -9,6 +9,9 @@ compos recommandées par map, et guide des builds.
 |---|---|
 | `/analyse <fichier>` | Analyse une run à partir de ton `EE.log` (mission, durée, escouade, migrations d'hôte…). **Toutes les données sensibles sont supprimées avant analyse.** |
 | `/builds` | Guide des builds spécial arbitration, avec menu par catégorie (Warframes, armes, compagnons, règles d'or). |
+| `/build definir` | (Admin) Ajoute ou modifie un build : catégorie, nom, description, mods, conseils. Même nom = mise à jour. |
+| `/build supprimer` | (Admin) Supprime un build (une catégorie vidée disparaît du menu). |
+| `/build categories` | (Admin) Liste les catégories et le nombre de builds. |
 | `/map liste` | Liste les maps configurées. |
 | `/map info <nom>` | Affiche la compo recommandée pour une map. |
 | `/map definir` | (Admin) Ajoute/modifie une map, son type et sa compo. |
@@ -62,9 +65,11 @@ donne un log propre et léger.
 
 - **Maps & compos** : via `/map definir` en jeu de commandes, ou en éditant
   `data/maps.json` (le bot relit le fichier à chaque commande).
-- **Builds** : éditez `data/builds.json`. Chaque catégorie est une liste
-  d'entrées `{nom, description, mods, conseils}` — les catégories apparaissent
-  automatiquement dans le menu de `/builds`.
+- **Builds** : via `/build definir` et `/build supprimer` directement sur
+  Discord (réservé aux admins), ou en éditant `data/builds.json`. Chaque
+  catégorie est une liste d'entrées `{nom, description, mods, conseils}` —
+  les catégories apparaissent automatiquement dans le menu de `/builds`, et
+  une nouvelle catégorie se crée simplement en la nommant dans `/build definir`.
 
 ## 📁 Structure
 

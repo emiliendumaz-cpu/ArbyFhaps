@@ -1,40 +1,58 @@
 {
   "Warframes": [
     {
-      "nom": "Octavia — AFK-proof Arbitration",
+      "nom": "Octavia",
       "description": "La valeur sûre des arbitrations longues. Mallet + Resonator scalent avec les dégâts ennemis.",
       "mods": "Umbral Intensify, Augur Reach, Stretch, Overextended, Primed Continuity, Constitution, Adaptation, Vitality",
       "conseils": "Arcanes : Molt Efficiency + Energize. Crouch-spam sur le Metronome pour l'invisibilité."
     },
     {
-      "nom": "Saryn — Nuke Défense",
-      "description": "Nettoie les défenses/interceptions. Les spores scalent à l'infini.",
+      "nom": "Saryn",
+      "description": "Nuke des défenses/interceptions. Les spores scalent à l'infini.",
       "mods": "Umbral Intensify, Umbral Vitality, Adaptation, Stretch, Primed Continuity, Molt Reconstruct, Regenerative Molt, Augur Reach",
       "conseils": "Garder les spores actives entre les vagues. Arme de spread : Epitaph ou Cedo."
     },
     {
-      "nom": "Wisp — Support universel",
-      "description": "Motes (vie + vitesse d'attaque + CC) pour toute l'escouade. Indispensable en compo organisée.",
+      "nom": "Mirage",
+      "description": "DPS explosif : Hall of Mirrors multiplie les tirs, Eclipse booste les dégâts.",
+      "mods": "Umbral Intensify, Adaptation, Primed Continuity, Constitution, Augur Message, Stretch, Umbral Vitality, Rolling Guard",
+      "conseils": "Total Eclipse (augment) partage le buff de dégâts à l'escouade. Attention à la survie : Rolling Guard obligatoire."
+    },
+    {
+      "nom": "Cyte-09",
+      "description": "Plateforme d'arme ultime : Evade (invisibilité) + munitions spéciales, parfait pour focus les drones.",
+      "mods": "Umbral Intensify, Adaptation, Primed Continuity, Constitution, Stretch, Umbral Vitality, Augur Message, Rolling Guard",
+      "conseils": "Son sniper Neutralizer fait fondre les drones d'arbitration à n'importe quel niveau."
+    },
+    {
+      "nom": "Wisp",
+      "description": "Support universel : motes (vie + vitesse d'attaque + CC) pour toute l'escouade.",
       "mods": "Primed Continuity, Umbral Intensify, Augur Message, Constitution, Stretch, Adaptation, Umbral Vitality, Archon Stretch",
       "conseils": "Poser les motes au point de regroupement. Breach Surge pour le nuke avec une arme à multishot."
     },
     {
-      "nom": "Nekros — Farm de Vitus",
-      "description": "Desecrate augmente les drops de Vitus Essence (~54% de chances en plus par cadavre).",
-      "mods": "Despoil, Health Conversion, Equilibrium, Adaptation, Umbral Vitality, Primed Continuity, Stretch, Overextended",
-      "conseils": "Une arme à découpe (slash) démultiplie les cadavres desecratables."
+      "nom": "Nidus (prebuff)",
+      "description": "Rôle prebuff : monte ses stacks puis renforce l'escouade avant/pendant la run.",
+      "mods": "Umbral Intensify, Umbral Vitality, Adaptation, Stretch, Primed Continuity, Streamline, Augur Reach, Equilibrium",
+      "conseils": "Larva pour regrouper + Parasitic Link. À adapter selon votre tech de prebuff d'escouade."
     },
     {
-      "nom": "Vauban — Roi de l'Interception",
-      "description": "Vortex regroupe et neutralise tout. Tient un point (voire deux) tout seul.",
+      "nom": "Jade (prebuff)",
+      "description": "Rôle prebuff : ses chants (auras) buffent toute l'escouade en continu.",
+      "mods": "Umbral Intensify, Adaptation, Primed Continuity, Constitution, Stretch, Umbral Vitality, Augur Message, Archon Stretch",
+      "conseils": "Choisir le chant selon le besoin de l'escouade. Glory on High pour nettoyer les packs regroupés."
+    },
+    {
+      "nom": "Vauban",
+      "description": "Roi de l'interception : Vortex regroupe et neutralise tout, tient un point (voire deux) tout seul.",
       "mods": "Primed Continuity, Streamline, Stretch, Overextended, Umbral Intensify, Adaptation, Constitution, Augur Reach",
       "conseils": "Photon Strike + augment Photon Repeater pour tuer les drones d'arbitration groupés."
     },
     {
-      "nom": "Khora — Cage à Vitus",
-      "description": "Strangledome + Whipclaw : CC, dégâts qui scalent et zone de farm bien délimitée.",
-      "mods": "Umbral Intensify, Accumulating Whipclaw, Stretch, Primed Continuity, Adaptation, Umbral Vitality, Streamline, Augur Reach",
-      "conseils": "Venari en mode soin. Pilfering Strangledome pour encore plus de loot."
+      "nom": "Volt",
+      "description": "Speed pour toute l'escouade, boucliers posés, Discharge en CC de secours.",
+      "mods": "Umbral Intensify, Stretch, Primed Continuity, Constitution, Adaptation, Umbral Vitality, Augur Message, Streamline",
+      "conseils": "Shocking Speed ou Capacitance selon la compo. Les boucliers boostent les dégâts crit des armes qui tirent au travers."
     }
   ],
   "Armes": [
