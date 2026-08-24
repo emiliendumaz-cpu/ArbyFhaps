@@ -29,6 +29,16 @@ Chaque serveur Discord a sa propre configuration.
 - `/build-add` *(admin)* — ajoute un build personnalisé propre au serveur
 - `/build-remove` *(admin)* — supprime un build personnalisé
 
+### ⏰ Suivi des arbitrations (message auto-actualisé)
+- `/tracker-start` *(admin)* — installe dans le salon un message que le bot **édite automatiquement toutes les 5 minutes** : arbitration en cours (nœud, mode, ennemi, compte à rebours) et prochaines arbitrations quand la source de prédictions répond
+- `/arbitration` — la même chose en une fois, sans message permanent
+- `/tracker-stop` *(admin)* — arrête et supprime le message
+- `/tier-set` *(admin)* — ajuste la note d'un nœud pour ce serveur
+
+Chaque arbitration est **notée de F à S** : note du nœud (Casta, Hydron, Ophelia… classés S) sinon note du mode de mission (Défense/Survie A … Défection F), le tout modifiable par serveur.
+
+Sources : [warframestat.us](https://docs.warframestat.us) pour l'arbitration en cours, [browser.wf](https://browser.wf) (best-effort) pour les prédictions.
+
 ### 📖 `/help`
 Affiche la liste de toutes les commandes du bot (réponse visible par vous seul).
 

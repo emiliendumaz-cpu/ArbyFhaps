@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-COGS = ["cogs.analyze", "cogs.maps", "cogs.builds", "cogs.help"]
+COGS = ["cogs.analyze", "cogs.maps", "cogs.builds", "cogs.help", "cogs.tracker"]
 
 
 class ArbyBot(commands.Bot):

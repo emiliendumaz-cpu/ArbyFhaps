@@ -50,6 +50,16 @@ class HelpCog(commands.Cog):
             inline=False,
         )
         embed.add_field(
+            name="⏰ Suivi des arbitrations",
+            value=(
+                "`/arbitration` — Arbitration en cours + prochaines, notées de F à S\n"
+                "`/tracker-start` 🔧 — Message auto-actualisé dans le salon\n"
+                "`/tracker-stop` 🔧 — Arrête le message auto-actualisé\n"
+                "`/tier-set` 🔧 — Ajuste la note d'un nœud pour ce serveur"
+            ),
+            inline=False,
+        )
+        embed.add_field(
             name="ℹ️ Divers",
             value="`/help` — Cette aide\n🔧 = réservé aux admins (permission « Gérer le serveur »)",
             inline=False,

@@ -27,6 +27,12 @@ def save_guild(guild_id: int, data: dict) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def all_guild_ids() -> list[int]:
+    if not GUILDS_DIR.exists():
+        return []
+    return [int(p.stem) for p in GUILDS_DIR.glob("*.json") if p.stem.isdigit()]
+
+
 def load_default_builds() -> list[dict]:
     path = DATA_DIR / "builds.json"
     with path.open(encoding="utf-8") as f:
