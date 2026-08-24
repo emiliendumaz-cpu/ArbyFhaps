@@ -8,6 +8,7 @@ serveur d'ajuster la note d'un nœud.
 
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
 
@@ -16,7 +17,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
-from utils import i18n, storage, theme, worldstate
+from utils import i18n, storage, theme, translate, worldstate
 
 log = logging.getLogger(__name__)
 
@@ -196,6 +197,14 @@ class TrackerCog(commands.Cog):
             embed.add_field(name=name, value=f"`{url}`\n```{verdict[:900]}```", inline=False)
         summary = await worldstate.inspect_schedule(self.session)
         embed.add_field(name="🧠 Planning interprété par le bot", value=f"```{summary[:1000]}```", inline=False)
+
+        # Test de traduction en direct (sans cache) pour diagnostiquer les échecs silencieux
+        try:
+            sample = await asyncio.to_thread(translate._translate_sync, "Bonjour, Tenno !", "en")
+            trans_status = f"OK — « Bonjour, Tenno ! » → « {sample} »"
+        except Exception as exc:
+            trans_status = f"ÉCHEC — {type(exc).__name__}: {exc}"
+        embed.add_field(name="🌐 Traduction automatique", value=f"```{trans_status[:1000]}```", inline=False)
 
         report = "\n\n".join(
             [f"== {name} ==\n{url}\n{verdict}" for name, url, verdict in results]

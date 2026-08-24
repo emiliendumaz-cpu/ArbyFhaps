@@ -42,6 +42,13 @@ class ArbyBot(commands.Bot):
 
 
 def main():
+    try:
+        import deep_translator  # noqa: F401
+    except ImportError:
+        logging.warning(
+            "deep-translator est absent : la traduction automatique des textes est DÉSACTIVÉE. "
+            "Lancez le bot via start.bat ou exécutez : pip install -r requirements.txt"
+        )
     token = os.getenv("DISCORD_TOKEN")
     if not token:
         raise SystemExit("DISCORD_TOKEN manquant : copiez .env.example vers .env et renseignez votre token.")
