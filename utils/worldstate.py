@@ -19,10 +19,14 @@ import aiohttp
 
 CURRENT_URL = "https://api.warframestat.us/pc/arbitration"
 SCHEDULE_URLS = [
-    ("semlar (10o.io)", "https://10o.io/arbitrations.json"),
     ("browse.wf", "https://browse.wf/arbys.json"),
+    ("semlar (10o.io)", "https://10o.io/arbitrations.json"),
 ]
-DIAGNOSTIC_URLS = [("warframestat.us", CURRENT_URL)] + SCHEDULE_URLS
+DIAGNOSTIC_URLS = (
+    [("warframestat.us", CURRENT_URL)]
+    + SCHEDULE_URLS
+    + [("browse.wf (page)", "https://browse.wf/arbys")]
+)
 TIMEOUT = aiohttp.ClientTimeout(total=15)
 # Le planning semlar pèse plusieurs Mo : timeout dédié plus large
 SCHEDULE_TIMEOUT = aiohttp.ClientTimeout(total=60)
@@ -91,15 +95,18 @@ class Arbitration:
     enemy: str
     expiry: datetime | None = None
     activation: datetime | None = None
+    source_tier: str | None = None  # note F→S fournie par la source (browse.wf)
 
 
 def rate(arby: Arbitration, guild_overrides: dict[str, str] | None = None) -> str:
-    """Note F → S : override serveur > nœud connu > mode de mission."""
+    """Note F → S : override serveur > note de la source > nœud connu > mode."""
     node_key = arby.node.lower()
     if guild_overrides:
         tier = guild_overrides.get(node_key)
         if tier in TIER_ORDER:
             return tier
+    if arby.source_tier in TIER_ORDER:
+        return arby.source_tier
     return NODE_TIER.get(node_key) or TYPE_TIER.get(arby.type_key, "C")
 
 
@@ -204,6 +211,13 @@ def _schedule_entry(item: dict) -> Arbitration | None:
         type_fr, type_key = "Arbitration", "?"
     start = _parse_time(item.get("activation") or item.get("start") or item.get("time"))
     end = _parse_time(item.get("expiry") or item.get("end"))
+
+    # Note F→S éventuellement fournie par la source (browse.wf affiche un tier)
+    tier_raw = item.get("tier") or item.get("rating") or nested.get("tier") or nested.get("rating")
+    source_tier = str(tier_raw).strip().upper() if tier_raw else None
+    if source_tier not in TIER_ORDER:
+        source_tier = None
+
     return Arbitration(
         node=node,
         mission_type=type_fr,
@@ -211,6 +225,7 @@ def _schedule_entry(item: dict) -> Arbitration | None:
         enemy=str(nested.get("enemy") or item.get("enemy") or ""),
         activation=start,
         expiry=end,
+        source_tier=source_tier,
     )
 
 
