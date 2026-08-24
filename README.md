@@ -17,6 +17,9 @@ compos recommandées par map, et guide des builds.
 | `/map definir` | (Admin) Ajoute/modifie une map, son type et sa compo. |
 | `/map supprimer` | (Admin) Supprime une map. |
 | `/langue` | Choisis ta langue (Français / English / Auto). Chaque joueur a la sienne ; en mode Auto, le bot suit la langue du client Discord. |
+| `/arby actuelle` | Affiche l'arbitration en cours (map, type, faction, temps restant, compo recommandée si la map est configurée). |
+| `/arby suivre` | (Admin) Poste un message dynamique dans le salon, **actualisé automatiquement à chaque rotation d'arbitration** — la map méta est marquée ⭐ avec sa compo. |
+| `/arby stop` | (Admin) Arrête le suivi dynamique sur le serveur. |
 
 ## 🔒 Confidentialité
 
@@ -80,6 +83,7 @@ cogs/analyse.py     # /analyse — analyse EE.log anonymisée
 cogs/maps.py        # /map — maps & compos
 cogs/builds.py      # /builds — guide des builds + /build (gestion)
 cogs/langue.py      # /langue — langue par joueur
+cogs/arby.py        # /arby — arbitration en cours + message dynamique
 utils/eelog.py      # anonymisation + parsing du EE.log
 utils/i18n.py       # traductions FR/EN + préférences de langue
 utils/storage.py    # lecture/écriture JSON atomique
@@ -96,6 +100,18 @@ langue du client Discord du joueur (français par défaut pour les autres
 langues). Le contenu éditable (descriptions des builds, notes des maps) reste
 dans la langue où vous l'écrivez. Pour ajouter une langue : compléter chaque
 entrée de `utils/i18n.py` et la liste `LANGS`.
+
+## 🎯 Suivi dynamique de l'arbitration
+
+`/arby suivre` poste un embed « Arbitration en cours » qui se met à jour tout
+seul à chaque rotation du jeu (vérification toutes les 2 minutes via l'API
+communautaire [warframestat.us](https://api.warframestat.us/pc/arbitration)).
+Le compte à rebours utilise un timestamp Discord : il défile en continu sans
+édition du message. Si la map en cours fait partie de vos maps configurées
+(`/map definir`), l'embed la marque ⭐ et affiche la compo recommandée.
+Un suivi par serveur ; il survit aux redémarrages du bot (`data/arby.json`),
+et supprimer le message à la main arrête le suivi proprement.
+La machine qui héberge le bot doit pouvoir joindre `api.warframestat.us` en HTTPS.
 
 ## ⚠️ Limites connues
 

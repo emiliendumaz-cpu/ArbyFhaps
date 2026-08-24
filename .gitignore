@@ -11,6 +11,7 @@ venv/
 # mais pas les sauvegardes temporaires ni les préférences des joueurs)
 data/*.bak
 data/langues.json
+data/arby.json
 
 # Logs uploadés — ne doivent JAMAIS être conservés
 *.log

@@ -150,6 +150,49 @@ STRINGS: dict[str, dict[str, str]] = {
     "map.deleted": {"fr": "🗑️ Map **{nom}** supprimée.", "en": "🗑️ Map **{nom}** deleted."},
     "map.unknown_simple": {"fr": "❌ Map `{nom}` inconnue.", "en": "❌ Unknown map `{nom}`."},
 
+    # --- /arby ---
+    "arby.title": {"fr": "🎯 Arbitration en cours", "en": "🎯 Current Arbitration"},
+    "arby.unavailable": {
+        "fr": "❌ Impossible de récupérer l'arbitration en cours (API indisponible). Réessaie dans quelques minutes.",
+        "en": "❌ Could not fetch the current arbitration (API unavailable). Try again in a few minutes.",
+    },
+    "arby.f_enemy": {"fr": "Faction", "en": "Faction"},
+    "arby.f_rotation": {"fr": "Rotation", "en": "Rotates"},
+    "arby.archwing": {"fr": "Mission Archwing", "en": "Archwing mission"},
+    "arby.meta_map": {
+        "fr": "⭐ Map méta — {nom}",
+        "en": "⭐ Meta map — {nom}",
+    },
+    "arby.meta_compo": {
+        "fr": "Compo recommandée : {compo}",
+        "en": "Recommended squad: {compo}",
+    },
+    "arby.not_meta_title": {"fr": "Map hors méta", "en": "Off-meta map"},
+    "arby.not_meta": {
+        "fr": "Cette map n'est pas dans vos maps configurées (`/map liste`).",
+        "en": "This map is not in your configured maps (`/map liste`).",
+    },
+    "arby.footer": {
+        "fr": "S'actualise automatiquement à chaque rotation • Source : warframestat.us",
+        "en": "Updates automatically on each rotation • Source: warframestat.us",
+    },
+    "arby.tracking_started": {
+        "fr": "📌 Message dynamique créé : il s'actualisera automatiquement à chaque nouvelle arbitration.",
+        "en": "📌 Dynamic message created: it will refresh automatically on each new arbitration.",
+    },
+    "arby.tracking_stopped": {
+        "fr": "🛑 Suivi de l'arbitration arrêté pour ce serveur.",
+        "en": "🛑 Arbitration tracking stopped for this server.",
+    },
+    "arby.no_tracking": {
+        "fr": "❌ Aucun suivi actif sur ce serveur. Lance `/arby suivre` d'abord.",
+        "en": "❌ No active tracking on this server. Run `/arby suivre` first.",
+    },
+    "arby.need_admin": {
+        "fr": "❌ Il faut la permission « Gérer le serveur » pour cette commande.",
+        "en": "❌ You need the “Manage Server” permission for this command.",
+    },
+
     # --- /builds & /build ---
     "b.none": {
         "fr": "❌ Aucun build configuré. Ajoutez-en avec `/build definir`.",
