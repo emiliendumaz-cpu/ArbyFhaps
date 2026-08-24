@@ -16,7 +16,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
-from utils import storage, theme, worldstate
+from utils import i18n, storage, theme, worldstate
 
 log = logging.getLogger(__name__)
 
@@ -49,15 +49,15 @@ class TrackerCog(commands.Cog):
     # Construction de l'embed
     # ------------------------------------------------------------------
 
-    async def _build_embed(self, guild_id: int) -> tuple[discord.Embed, str]:
+    async def _build_embed(self, guild_id: int, lang: str = "fr") -> tuple[discord.Embed, str]:
         overrides = storage.load_guild(guild_id).get("tiers", {})
         current, upcoming = await worldstate.get_current_and_upcoming(self.session)
 
         embed = theme.make_embed(
-            "⚖️ Suivi des Arbitrations",
-            f"Notation communautaire de **F** à **S** (ajustable avec `/tier-set`).\n{theme.SEPARATOR}",
+            i18n.t(lang, "tr.title"),
+            f"{i18n.t(lang, 'tr.desc')}\n{theme.SEPARATOR}",
             color=theme.GOLD,
-            footer_extra=f"Actualisé toutes les {REFRESH_MINUTES} min",
+            footer_extra=i18n.t(lang, "tr.refresh", n=REFRESH_MINUTES),
         )
 
         fingerprint_parts: list[str] = []
@@ -66,17 +66,11 @@ class TrackerCog(commands.Cog):
             tier = worldstate.rate(current, overrides)
             value = _fmt_line(current, tier)
             if current.expiry:
-                value += f"\n⏳ Se termine <t:{int(current.expiry.timestamp())}:R>"
-            embed.add_field(name="🔥 En cours", value=value, inline=False)
+                value += "\n" + i18n.t(lang, "tr.ends", when=f"<t:{int(current.expiry.timestamp())}:R>")
+            embed.add_field(name=i18n.t(lang, "tr.current"), value=value, inline=False)
             fingerprint_parts.append(f"{current.node}|{tier}")
         else:
-            embed.add_field(
-                name="🔥 En cours",
-                value="*Donnée momentanément indisponible (sources muettes ou non résolues). "
-                      "Réessai automatique dans quelques minutes — un admin peut lancer `/sources` "
-                      "pour diagnostiquer.*",
-                inline=False,
-            )
+            embed.add_field(name=i18n.t(lang, "tr.current"), value=i18n.t(lang, "tr.nodata"), inline=False)
             fingerprint_parts.append("none")
 
         if upcoming:
@@ -86,13 +80,9 @@ class TrackerCog(commands.Cog):
                 when = f"<t:{int(arby.activation.timestamp())}:t> · " if arby.activation else ""
                 lines.append(f"{when}{_fmt_line(arby, tier)}")
                 fingerprint_parts.append(f"{arby.node}|{tier}")
-            embed.add_field(name="🗓️ À venir", value="\n".join(lines), inline=False)
+            embed.add_field(name=i18n.t(lang, "tr.upcoming"), value="\n".join(lines), inline=False)
         else:
-            embed.add_field(
-                name="🗓️ À venir",
-                value="*Prédictions indisponibles pour le moment.*",
-                inline=False,
-            )
+            embed.add_field(name=i18n.t(lang, "tr.upcoming"), value=i18n.t(lang, "tr.nopred"), inline=False)
 
         return embed, "|".join(fingerprint_parts)
 
@@ -121,7 +111,7 @@ class TrackerCog(commands.Cog):
         if channel is None:
             return
 
-        embed, fingerprint = await self._build_embed(guild_id)
+        embed, fingerprint = await self._build_embed(guild_id, tracker.get("lang", "fr"))
         if self._last_render.get(guild_id) == fingerprint:
             return  # rien de neuf : pas d'édition inutile
         try:
@@ -144,24 +134,25 @@ class TrackerCog(commands.Cog):
     @app_commands.command(name="arbitration", description="Affiche l'arbitration en cours et les prochaines, notées de F à S.")
     async def arbitration(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True)
-        embed, _ = await self._build_embed(interaction.guild_id)
+        lang = i18n.user_lang(interaction.user.id)
+        embed, _ = await self._build_embed(interaction.guild_id, lang)
         await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="tracker-start", description="(Admin) Installe le message auto-actualisé des arbitrations dans ce salon.")
     @app_commands.default_permissions(manage_guild=True)
     async def tracker_start(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True, ephemeral=True)
-        embed, fingerprint = await self._build_embed(interaction.guild_id)
+        lang = i18n.user_lang(interaction.user.id)
+        embed, fingerprint = await self._build_embed(interaction.guild_id, lang)
         message = await interaction.channel.send(embed=embed)
         data = storage.load_guild(interaction.guild_id)
-        data["tracker"] = {"channel_id": interaction.channel_id, "message_id": message.id}
+        data["tracker"] = {"channel_id": interaction.channel_id, "message_id": message.id, "lang": lang}
         storage.save_guild(interaction.guild_id, data)
         self._last_render[interaction.guild_id] = fingerprint
         await interaction.followup.send(
             embed=theme.make_embed(
-                "✅ Tracker installé",
-                f"Le message sera actualisé toutes les {REFRESH_MINUTES} minutes. "
-                "Épinglez-le pour le retrouver facilement !",
+                i18n.t(lang, "tr.installed.title"),
+                i18n.t(lang, "tr.installed.desc", n=REFRESH_MINUTES),
                 color=theme.GREEN,
             ),
             ephemeral=True,
@@ -170,11 +161,12 @@ class TrackerCog(commands.Cog):
     @app_commands.command(name="tracker-stop", description="(Admin) Arrête le message auto-actualisé des arbitrations.")
     @app_commands.default_permissions(manage_guild=True)
     async def tracker_stop(self, interaction: discord.Interaction):
+        lang = i18n.user_lang(interaction.user.id)
         data = storage.load_guild(interaction.guild_id)
         tracker = data.pop("tracker", None)
         if tracker is None:
             await interaction.response.send_message(
-                embed=theme.error_embed("Aucun tracker actif sur ce serveur."), ephemeral=True
+                embed=theme.error_embed(i18n.t(lang, "tr.noactive"), lang), ephemeral=True
             )
             return
         storage.save_guild(interaction.guild_id, data)
@@ -187,7 +179,7 @@ class TrackerCog(commands.Cog):
             except (discord.NotFound, discord.Forbidden):
                 pass
         await interaction.response.send_message(
-            embed=theme.make_embed("🗑️ Tracker arrêté", color=theme.GREEN), ephemeral=True
+            embed=theme.make_embed(i18n.t(lang, "tr.stopped"), color=theme.GREEN), ephemeral=True
         )
 
     @app_commands.command(name="sources", description="(Admin) Diagnostique les sources de données d'arbitration.")
@@ -221,10 +213,11 @@ class TrackerCog(commands.Cog):
         data.setdefault("tiers", {})[node.lower()] = tier
         storage.save_guild(interaction.guild_id, data)
         self._last_render.pop(interaction.guild_id, None)  # force la prochaine édition
+        lang = i18n.user_lang(interaction.user.id)
         await interaction.response.send_message(
             embed=theme.make_embed(
-                f"✅ {worldstate.TIER_EMOJI[tier]} {node} noté {tier}",
-                "La note sera appliquée à la prochaine actualisation du tracker.",
+                i18n.t(lang, "tr.tierset", emoji=worldstate.TIER_EMOJI[tier], node=node, tier=tier),
+                i18n.t(lang, "tr.tierset.desc"),
                 color=theme.GREEN,
             )
         )

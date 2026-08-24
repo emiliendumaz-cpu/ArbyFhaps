@@ -1,4 +1,4 @@
-"""Commande /help : liste de toutes les commandes du bot."""
+"""Commande /help : liste de toutes les commandes du bot (localisée)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import theme
+from utils import i18n, theme
 
 
 class HelpCog(commands.Cog):
@@ -15,56 +15,18 @@ class HelpCog(commands.Cog):
 
     @app_commands.command(name="help", description="Affiche toutes les commandes du bot.")
     async def help(self, interaction: discord.Interaction):
+        lang = i18n.user_lang(interaction.user.id)
         embed = theme.make_embed(
-            "📖 Commandes d'ArbyFhaps",
-            "Le bot Arbitration de votre serveur : analyse de runs, maps et builds.\n"
-            f"{theme.SEPARATOR}",
+            i18n.t(lang, "h.title"),
+            f"{i18n.t(lang, 'h.desc')}\n{theme.SEPARATOR}",
             color=theme.BLUE,
         )
-        embed.add_field(
-            name="📊 Analyse de run",
-            value=(
-                "`/analyse` — Analysez votre fichier `EE.log` "
-                "(`%LOCALAPPDATA%\\Warframe\\EE.log`).\n"
-                "🔒 IPs, IDs et données perso supprimés automatiquement, rien n'est stocké."
-            ),
-            inline=False,
-        )
-        embed.add_field(
-            name="🗺️ Maps & compos",
-            value=(
-                "`/map <nom>` — Compo recommandée pour une map\n"
-                "`/maps` — Liste des maps configurées\n"
-                "`/map-add` 🔧 — Ajouter/mettre à jour une map\n"
-                "`/map-remove` 🔧 — Supprimer une map"
-            ),
-            inline=False,
-        )
-        embed.add_field(
-            name="⚖️ Builds Arbitration",
-            value=(
-                "`/builds [categorie]` — Guide des builds (navigation ◀ ▶, avec captures)\n"
-                "`/build-add` 🔧 — Ajouter un build personnalisé\n"
-                "`/build-image` 🔧 — Attacher une capture d'écran à un build\n"
-                "`/build-remove` 🔧 — Supprimer un build personnalisé"
-            ),
-            inline=False,
-        )
-        embed.add_field(
-            name="⏰ Suivi des arbitrations",
-            value=(
-                "`/arbitration` — Arbitration en cours + prochaines, notées de F à S\n"
-                "`/tracker-start` 🔧 — Message auto-actualisé dans le salon\n"
-                "`/tracker-stop` 🔧 — Arrête le message auto-actualisé\n"
-                "`/tier-set` 🔧 — Ajuste la note d'un nœud pour ce serveur"
-            ),
-            inline=False,
-        )
-        embed.add_field(
-            name="ℹ️ Divers",
-            value="`/help` — Cette aide\n🔧 = réservé aux admins (permission « Gérer le serveur »)",
-            inline=False,
-        )
+        for section in ("analyse", "maps", "builds", "tracker", "misc"):
+            embed.add_field(
+                name=i18n.t(lang, f"h.{section}.name"),
+                value=i18n.t(lang, f"h.{section}.value"),
+                inline=False,
+            )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 

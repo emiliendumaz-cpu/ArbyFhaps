@@ -32,5 +32,7 @@ def make_embed(
     return embed
 
 
-def error_embed(message: str) -> discord.Embed:
-    return make_embed("❌ Oups", message, color=RED)
+def error_embed(message: str, lang: str = "fr") -> discord.Embed:
+    from utils import i18n
+
+    return make_embed(i18n.t(lang, "err.title"), message, color=RED)

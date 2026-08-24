@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 venv/
 data/guilds/
+data/users.json
 *.log
 EE.log
 ee.log

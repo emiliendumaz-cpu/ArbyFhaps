@@ -13,7 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import storage, theme
+from utils import i18n, storage, theme
 
 IMAGES_DIR = Path(__file__).resolve().parent.parent / "data" / "build_images"
 IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
@@ -39,21 +39,21 @@ def _image_path(build: dict) -> Path | None:
     return None
 
 
-def _build_embed(build: dict, index: int, total: int) -> tuple[discord.Embed, discord.File | None]:
+def _build_embed(build: dict, index: int, total: int, lang: str = "fr") -> tuple[discord.Embed, discord.File | None]:
     embed = theme.make_embed(
         f"⚖️ {build['name']}",
         f"{build['description']}\n{theme.SEPARATOR}",
         color=theme.GOLD,
-        footer_extra=f"Build {index + 1}/{total}",
+        footer_extra=i18n.t(lang, "b.footer", i=index + 1, n=total),
     )
-    embed.add_field(name="🤖 Warframe", value=build["frame"], inline=True)
-    embed.add_field(name="🏷️ Catégorie", value=build["category"], inline=True)
+    embed.add_field(name=i18n.t(lang, "b.frame"), value=build["frame"], inline=True)
+    embed.add_field(name=i18n.t(lang, "b.cat"), value=build["category"], inline=True)
     if build.get("mods"):
-        embed.add_field(name="🧩 Mods", value=build["mods"], inline=False)
+        embed.add_field(name=i18n.t(lang, "b.mods"), value=build["mods"], inline=False)
     if build.get("arcanes"):
-        embed.add_field(name="✨ Arcanes", value=build["arcanes"], inline=False)
+        embed.add_field(name=i18n.t(lang, "b.arcanes"), value=build["arcanes"], inline=False)
     if build.get("shards"):
-        embed.add_field(name="💎 Éclats d'Archonte", value=build["shards"], inline=False)
+        embed.add_field(name=i18n.t(lang, "b.shards"), value=build["shards"], inline=False)
 
     file = None
     path = _image_path(build)
@@ -64,13 +64,16 @@ def _build_embed(build: dict, index: int, total: int) -> tuple[discord.Embed, di
 
 
 class BuildsPaginator(discord.ui.View):
-    def __init__(self, builds: list[dict]):
+    def __init__(self, builds: list[dict], lang: str = "fr"):
         super().__init__(timeout=300)
         self.builds = builds
+        self.lang = lang
         self.index = 0
+        self.previous.label = i18n.t(lang, "b.prev")
+        self.next.label = i18n.t(lang, "b.next")
 
     def current(self) -> tuple[discord.Embed, discord.File | None]:
-        return _build_embed(self.builds[self.index], self.index, len(self.builds))
+        return _build_embed(self.builds[self.index], self.index, len(self.builds), self.lang)
 
     async def _flip(self, interaction: discord.Interaction, step: int):
         self.index = (self.index + step) % len(self.builds)
@@ -100,16 +103,17 @@ class BuildsCog(commands.Cog):
     @app_commands.command(name="builds", description="Affiche les builds spécial Arbitration.")
     @app_commands.describe(categorie="Filtrer par catégorie (optionnel)")
     async def builds(self, interaction: discord.Interaction, categorie: str | None = None):
+        lang = i18n.user_lang(interaction.user.id)
         builds = self._all_builds(interaction.guild_id)
         if categorie:
             builds = [b for b in builds if categorie.lower() in b["category"].lower()]
         if not builds:
             await interaction.response.send_message(
-                embed=theme.error_embed(f"Aucun build trouvé pour la catégorie « {categorie} »."),
+                embed=theme.error_embed(i18n.t(lang, "b.nocat", cat=categorie), lang),
                 ephemeral=True,
             )
             return
-        view = BuildsPaginator(builds)
+        view = BuildsPaginator(builds, lang)
         embed, file = view.current()
         if file:
             await interaction.response.send_message(embed=embed, view=view, file=file)
@@ -130,25 +134,25 @@ class BuildsCog(commands.Cog):
     @app_commands.describe(nom="Nom du build (autocomplétion)", fichier="Capture d'écran (png/jpg/webp, max 8 Mo)")
     @app_commands.default_permissions(manage_guild=True)
     async def build_image(self, interaction: discord.Interaction, nom: str, fichier: discord.Attachment):
+        lang = i18n.user_lang(interaction.user.id)
         build = next(
             (b for b in self._all_builds(interaction.guild_id) if b["name"].lower() == nom.lower()),
             None,
         )
         if build is None:
             await interaction.response.send_message(
-                embed=theme.error_embed(f"Build **{nom}** introuvable."), ephemeral=True
+                embed=theme.error_embed(i18n.t(lang, "b.img.notfound", name=nom), lang), ephemeral=True
             )
             return
         ext = Path(fichier.filename).suffix.lower()
         if ext not in IMAGE_EXTS:
             await interaction.response.send_message(
-                embed=theme.error_embed("Format non géré : envoyez du png, jpg, webp ou gif."),
-                ephemeral=True,
+                embed=theme.error_embed(i18n.t(lang, "b.img.badfmt"), lang), ephemeral=True
             )
             return
         if fichier.size > MAX_IMAGE_BYTES:
             await interaction.response.send_message(
-                embed=theme.error_embed("Image trop lourde (max 8 Mo)."), ephemeral=True
+                embed=theme.error_embed(i18n.t(lang, "b.img.toobig"), lang), ephemeral=True
             )
             return
 
@@ -165,8 +169,8 @@ class BuildsCog(commands.Cog):
         await fichier.save(target)
 
         embed = theme.make_embed(
-            f"✅ Image enregistrée pour {build['name']}",
-            "Elle s'affichera désormais dans `/builds`.",
+            i18n.t(lang, "b.img.saved", name=build['name']),
+            i18n.t(lang, "b.img.saved.desc"),
             color=theme.GREEN,
         )
         file = discord.File(target, filename=target.name)
@@ -216,10 +220,11 @@ class BuildsCog(commands.Cog):
             }
         )
         storage.save_guild(interaction.guild_id, data)
+        lang = i18n.user_lang(interaction.user.id)
         await interaction.response.send_message(
             embed=theme.make_embed(
-                f"✅ Build ajouté : {nom} ({frame})",
-                "Ajoutez une capture avec `/build-image` si vous voulez.",
+                i18n.t(lang, "b.added", name=nom, frame=frame),
+                i18n.t(lang, "b.added.hint"),
                 color=theme.GREEN,
             )
         )
@@ -228,20 +233,19 @@ class BuildsCog(commands.Cog):
     @app_commands.describe(nom="Nom du build à supprimer")
     @app_commands.default_permissions(manage_guild=True)
     async def build_remove(self, interaction: discord.Interaction, nom: str):
+        lang = i18n.user_lang(interaction.user.id)
         data = storage.load_guild(interaction.guild_id)
         before = len(data.get("builds", []))
         data["builds"] = [b for b in data.get("builds", []) if b["name"].lower() != nom.lower()]
         if len(data["builds"]) == before:
             await interaction.response.send_message(
-                embed=theme.error_embed(
-                    f"Build **{nom}** introuvable (les builds par défaut ne peuvent pas être supprimés)."
-                ),
+                embed=theme.error_embed(i18n.t(lang, "b.notfound", name=nom), lang),
                 ephemeral=True,
             )
             return
         storage.save_guild(interaction.guild_id, data)
         await interaction.response.send_message(
-            embed=theme.make_embed(f"🗑️ Build supprimé : {nom}", color=theme.GREEN)
+            embed=theme.make_embed(i18n.t(lang, "b.removed", name=nom), color=theme.GREEN)
         )
 
 
