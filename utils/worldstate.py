@@ -353,6 +353,81 @@ async def inspect_schedule(session: aiohttp.ClientSession) -> str:
     return "\n".join(lines)
 
 
+BROWSE_PAGE = "https://browse.wf/arbys"
+
+
+async def _get_text(session: aiohttp.ClientSession, url: str) -> str:
+    async with session.get(url, timeout=TIMEOUT) as resp:
+        resp.raise_for_status()
+        return await resp.text()
+
+
+async def discover_browse(session: aiohttp.ClientSession) -> str:
+    """Explore la page browse.wf/arbys pour trouver son flux de données.
+
+    Liste les scripts chargés par la page, extrait les URL candidates
+    (.json / api / arb…) qu'ils contiennent, et teste chacune. Le rapport
+    sert à identifier l'endpoint réel à brancher.
+    """
+    from urllib.parse import urljoin
+
+    lines: list[str] = []
+    try:
+        html = await _get_text(session, BROWSE_PAGE)
+    except Exception as exc:
+        return f"Page inaccessible : {type(exc).__name__}: {exc}"
+
+    dates = len(re.findall(r"20\d\d-\d\d-\d\d", html))
+    lines.append(
+        f"Page : {len(html)} caractères | 'SolNode' ×{html.count('SolNode')} "
+        f"| dates ×{dates} (si élevés, le planning est peut-être dans le HTML même)"
+    )
+
+    scripts = re.findall(r"<script[^>]+src=[\"']([^\"']+)[\"']", html)
+    candidates: set[str] = set()
+    for m in re.findall(r"[\"']([^\"']*\.json[^\"']*)[\"']", html):
+        candidates.add(urljoin(BROWSE_PAGE, m))
+
+    js_urls = [urljoin(BROWSE_PAGE, s) for s in scripts]
+    lines.append("Scripts de la page :")
+    if js_urls:
+        lines.extend(f"  {u}" for u in js_urls)
+    else:
+        lines.append("  (aucun)")
+
+    for js in js_urls[:6]:
+        if not js.startswith("https://browse.wf"):
+            continue
+        try:
+            code = await _get_text(session, js)
+        except Exception as exc:
+            lines.append(f"  {js} : illisible ({type(exc).__name__})")
+            continue
+        for m in re.findall(r"[\"']([^\"'\s]{2,120})[\"']", code):
+            low = m.lower()
+            if m.endswith((".js", ".css", ".png", ".svg", ".ico")):
+                continue
+            if ".json" in low or "/api/" in low or "arb" in low:
+                if "/" in m or ".json" in low:
+                    candidates.add(urljoin(BROWSE_PAGE, m))
+
+    lines.append("Candidats testés :")
+    tested = 0
+    for cand in sorted(candidates):
+        if not cand.startswith("https://browse.wf") or tested >= 10:
+            continue
+        tested += 1
+        try:
+            async with session.get(cand, timeout=TIMEOUT) as resp:
+                body = (await resp.text())[:120].replace("\n", " ")
+                lines.append(f"  HTTP {resp.status} {cand}\n    → {body}")
+        except Exception as exc:
+            lines.append(f"  ÉCHEC {cand} ({type(exc).__name__})")
+    if tested == 0:
+        lines.append("  (aucun candidat trouvé — le planning est probablement calculé par le JS ou rendu dans le HTML)")
+    return "\n".join(lines)
+
+
 async def probe_sources(session: aiohttp.ClientSession) -> list[tuple[str, str, str]]:
     """Diagnostic /sources : (nom, url, résultat court) pour chaque source."""
     results = []

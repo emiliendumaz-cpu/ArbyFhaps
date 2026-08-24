@@ -8,6 +8,7 @@ serveur d'ajuster la note d'un nœud.
 
 from __future__ import annotations
 
+import io
 import logging
 
 import aiohttp
@@ -206,7 +207,19 @@ class TrackerCog(commands.Cog):
             embed.add_field(name=name, value=f"`{url}`\n```{verdict[:900]}```", inline=False)
         summary = await worldstate.inspect_schedule(self.session)
         embed.add_field(name="🧠 Planning interprété par le bot", value=f"```{summary[:1000]}```", inline=False)
-        await interaction.followup.send(embed=embed, ephemeral=True)
+
+        discovery = await worldstate.discover_browse(self.session)
+        embed.add_field(
+            name="🔎 Découverte browse.wf",
+            value=f"```{discovery[:1000]}```\n*Rapport complet en pièce jointe.*",
+            inline=False,
+        )
+        report = "\n\n".join(
+            [f"== {name} ==\n{url}\n{verdict}" for name, url, verdict in results]
+            + [f"== Planning interprété ==\n{summary}", f"== Découverte browse.wf ==\n{discovery}"]
+        )
+        file = discord.File(io.BytesIO(report.encode("utf-8")), filename="diagnostic-sources.txt")
+        await interaction.followup.send(embed=embed, file=file, ephemeral=True)
 
     @app_commands.command(name="tier-set", description="(Admin) Fixe la note (F à S) d'un nœud pour ce serveur.")
     @app_commands.describe(node="Nœud, tel qu'affiché par le tracker (ex : Casta (Ceres))", tier="Note")
