@@ -20,7 +20,7 @@ import aiohttp
 CURRENT_URL = "https://api.warframestat.us/pc/arbitration"
 SCHEDULE_URLS = [
     ("semlar (10o.io)", "https://10o.io/arbitrations.json"),
-    ("browser.wf", "https://browser.wf/arbys.json"),
+    ("browse.wf", "https://browse.wf/arbys.json"),
 ]
 DIAGNOSTIC_URLS = [("warframestat.us", CURRENT_URL)] + SCHEDULE_URLS
 TIMEOUT = aiohttp.ClientTimeout(total=15)
@@ -229,18 +229,39 @@ async def _get_schedule_data(session: aiohttp.ClientSession):
         if (now - fetched_at).total_seconds() < ttl:
             return _schedule_cache["data"]
 
-    data = None
+    chosen: list | None = None
     for name, url in SCHEDULE_URLS:
         try:
             data = await _get_json(session, url, timeout=SCHEDULE_TIMEOUT)
-            size = len(data) if isinstance(data, list) else "?"
-            log.info("Planning %s récupéré (%s entrées)", name, size)
-            break
         except Exception as exc:
             log.warning("Planning %s indisponible : %s", name, exc)
-    _schedule_cache["data"] = data
+            continue
+        entries = _as_entry_list(data)
+        if not entries:
+            continue
+        if chosen is None:
+            chosen = entries  # meilleur candidat par défaut, même périmé
+        if _is_fresh(entries, now):
+            log.info("Planning %s récupéré (%d entrées, à jour)", name, len(entries))
+            chosen = entries
+            break
+        log.warning("Planning %s périmé (%d entrées, toutes passées) — source suivante", name, len(entries))
+    _schedule_cache["data"] = chosen
     _schedule_cache["fetched_at"] = now
-    return data
+    return chosen
+
+
+def _is_fresh(entries: list, now: datetime) -> bool:
+    """Vrai si la fin du planning est dans le futur (source encore alimentée)."""
+    for item in reversed(entries[-5:]):
+        if not isinstance(item, dict):
+            continue
+        arby = _schedule_entry(item)
+        if arby is None:
+            continue
+        end = arby.expiry or arby.activation
+        return end is not None and end >= now
+    return False
 
 
 async def fetch_schedule(session: aiohttp.ClientSession, limit: int = 6) -> tuple[Arbitration | None, list[Arbitration]]:
