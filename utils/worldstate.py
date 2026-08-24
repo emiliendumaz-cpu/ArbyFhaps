@@ -1,22 +1,28 @@
 """Récupération de l'arbitration en cours / à venir et notation F → S.
 
-Sources :
- - Arbitration en cours : https://api.warframestat.us/pc/arbitration (API WFCD)
- - Arbitrations à venir : https://browser.wf/arbys.json (prédictions communautaires,
-   best-effort : si l'endpoint est indisponible ou change de format, le tracker
-   n'affiche que l'arbitration en cours)
+Sources, par ordre d'essai :
+ - warframestat.us : arbitration en cours (renvoie parfois des données non
+   résolues type « SolNode000 / Unknown » → filtrées comme indisponibles)
+ - semlar (10o.io) et browser.wf : planning des arbitrations (en cours + à
+   venir). Best-effort : chaque source est tolérée en échec, la commande
+   /sources permet de diagnostiquer depuis la machine qui héberge le bot.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import aiohttp
 
 CURRENT_URL = "https://api.warframestat.us/pc/arbitration"
-UPCOMING_URL = "https://browser.wf/arbys.json"
+SCHEDULE_URLS = [
+    ("semlar (10o.io)", "https://10o.io/arbitrations.json"),
+    ("browser.wf", "https://browser.wf/arbys.json"),
+]
+DIAGNOSTIC_URLS = [("warframestat.us", CURRENT_URL)] + SCHEDULE_URLS
 TIMEOUT = aiohttp.ClientTimeout(total=15)
 
 log = logging.getLogger(__name__)
@@ -24,7 +30,7 @@ log = logging.getLogger(__name__)
 TIER_ORDER = ["S", "A", "B", "C", "D", "F"]
 TIER_EMOJI = {"S": "🟡", "A": "🟢", "B": "🔵", "C": "⚪", "D": "🟠", "F": "🔴"}
 
-# Nom FR des modes de mission (clés = valeurs renvoyées par l'API, en anglais)
+# Nom FR des modes de mission (clés = valeurs renvoyées par les API, en anglais)
 TYPE_FR = {
     "defense": "Défense",
     "survival": "Survie",
@@ -38,13 +44,17 @@ TYPE_FR = {
     "mirror defense": "Défense Miroir",
     "alchemy": "Alchimie",
     "skirmish": "Escarmouche",
+    "dark sector defense": "Défense (Secteur Obscur)",
+    "dark sector survival": "Survie (Secteur Obscur)",
 }
 
 # Note par défaut selon le mode de mission (consensus communautaire, modifiable
 # par serveur avec /tier-set)
 TYPE_TIER = {
     "defense": "A",
+    "dark sector defense": "A",
     "survival": "A",
+    "dark sector survival": "A",
     "disruption": "A",
     "excavation": "B",
     "interception": "B",
@@ -63,9 +73,12 @@ NODE_TIER = {
     "hydron (sedna)": "S",
     "helene (saturn)": "S",
     "ophelia (uranus)": "S",
+    "seimeni (ceres)": "S",
     "cinxia (ceres)": "A",
     "odin (mercury)": "B",
 }
+
+_RAW_SOLNODE_RE = re.compile(r"^SolNode\d+$", re.IGNORECASE)
 
 
 @dataclass
@@ -88,16 +101,13 @@ def rate(arby: Arbitration, guild_overrides: dict[str, str] | None = None) -> st
     return NODE_TIER.get(node_key) or TYPE_TIER.get(arby.type_key, "C")
 
 
-def _parse_iso(value) -> datetime | None:
-    if not isinstance(value, str):
-        return None
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-
-
-def _parse_epoch(value) -> datetime | None:
+def _parse_time(value) -> datetime | None:
+    """Accepte ISO 8601 ou epoch (secondes/millisecondes)."""
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            pass
     try:
         ts = float(value)
     except (TypeError, ValueError):
@@ -112,59 +122,101 @@ def _normalize_type(value: str) -> tuple[str, str]:
     return TYPE_FR.get(key, value.strip()), key
 
 
+def _is_valid(arby: Arbitration) -> bool:
+    """Écarte les réponses non résolues (SolNode000 / Unknown / Tenno)."""
+    if _RAW_SOLNODE_RE.match(arby.node.strip()):
+        return False
+    if arby.type_key in ("unknown", "?", ""):
+        return False
+    if arby.enemy.strip().lower() == "tenno":
+        return False
+    return True
+
+
+async def _get_json(session: aiohttp.ClientSession, url: str):
+    async with session.get(url, timeout=TIMEOUT) as resp:
+        resp.raise_for_status()
+        return await resp.json(content_type=None)
+
+
 async def fetch_current(session: aiohttp.ClientSession) -> Arbitration | None:
-    """Arbitration en cours via warframestat.us. None si indisponible."""
+    """Arbitration en cours via warframestat.us ; None si indisponible/invalide."""
     try:
-        async with session.get(CURRENT_URL, timeout=TIMEOUT) as resp:
-            resp.raise_for_status()
-            data = await resp.json()
-    except Exception as exc:  # réseau, JSON, 5xx…
-        log.warning("Arbitration en cours indisponible : %s", exc)
+        data = await _get_json(session, CURRENT_URL)
+    except Exception as exc:
+        log.warning("warframestat.us indisponible : %s", exc)
+        return None
+    if not isinstance(data, dict):
         return None
 
     node = data.get("node") or data.get("nodeKey")
     if not node:
         return None
     type_fr, type_key = _normalize_type(str(data.get("type") or data.get("typeKey") or "?"))
-    return Arbitration(
+    arby = Arbitration(
         node=str(node),
         mission_type=type_fr,
         type_key=type_key,
         enemy=str(data.get("enemy") or "?"),
-        expiry=_parse_iso(data.get("expiry")),
-        activation=_parse_iso(data.get("activation")),
+        expiry=_parse_time(data.get("expiry")),
+        activation=_parse_time(data.get("activation")),
     )
-
-
-def _upcoming_entry(item: dict) -> Arbitration | None:
-    """Convertit une entrée de prédiction, tolérant plusieurs noms de champs."""
-    node = item.get("node") or item.get("nodeKey") or item.get("name")
-    if not node:
+    if not _is_valid(arby):
+        log.warning("warframestat.us a renvoyé une arbitration non résolue (%s)", arby.node)
         return None
-    type_raw = item.get("type") or item.get("typeKey") or item.get("mission_type") or "?"
+    return arby
+
+
+def _schedule_entry(item: dict) -> Arbitration | None:
+    """Convertit une entrée de planning, tolérant plusieurs formats.
+
+    Formats gérés :
+     - semlar : {"start": …, "end": …, "solnode": "SolNode123",
+                 "solnodedata": {"name"/"node", "planet", "enemy", "type", "tile"}}
+     - générique : {"node"/"name", "type"/"mission_type", "activation"/"start"/"time"}
+    """
+    nested = item.get("solnodedata") if isinstance(item.get("solnodedata"), dict) else {}
+
+    node = nested.get("node") or item.get("node") or item.get("nodeKey")
+    if not node:
+        name = nested.get("name") or item.get("name")
+        planet = nested.get("planet") or item.get("planet")
+        if name and planet:
+            node = f"{name} ({planet})"
+        else:
+            node = name
+    if not node or _RAW_SOLNODE_RE.match(str(node).strip()):
+        return None
+
+    type_raw = (nested.get("type") or item.get("type") or item.get("typeKey")
+                or item.get("mission_type") or "?")
     type_fr, type_key = _normalize_type(str(type_raw))
-    start = (
-        _parse_iso(item.get("activation") or item.get("start") or item.get("time"))
-        or _parse_epoch(item.get("activation") or item.get("start") or item.get("time"))
-    )
+    start = _parse_time(item.get("activation") or item.get("start") or item.get("time"))
+    end = _parse_time(item.get("expiry") or item.get("end"))
     return Arbitration(
         node=str(node),
         mission_type=type_fr,
         type_key=type_key,
-        enemy=str(item.get("enemy") or ""),
+        enemy=str(nested.get("enemy") or item.get("enemy") or ""),
         activation=start,
+        expiry=end,
     )
 
 
-async def fetch_upcoming(session: aiohttp.ClientSession, limit: int = 6) -> list[Arbitration]:
-    """Prochaines arbitrations (best-effort). Liste vide si la source est KO."""
-    try:
-        async with session.get(UPCOMING_URL, timeout=TIMEOUT) as resp:
-            resp.raise_for_status()
-            data = await resp.json(content_type=None)
-    except Exception as exc:
-        log.warning("Prédictions d'arbitration indisponibles : %s", exc)
-        return []
+async def fetch_schedule(session: aiohttp.ClientSession, limit: int = 6) -> tuple[Arbitration | None, list[Arbitration]]:
+    """Planning best-effort : (en cours d'après le planning, prochaines).
+
+    Essaie chaque source de SCHEDULE_URLS ; renvoie (None, []) si tout est KO.
+    """
+    data = None
+    for name, url in SCHEDULE_URLS:
+        try:
+            data = await _get_json(session, url)
+            break
+        except Exception as exc:
+            log.warning("Planning %s indisponible : %s", name, exc)
+    if data is None:
+        return None, []
 
     if isinstance(data, dict):
         for key in ("upcoming", "arbitrations", "data", "predictions"):
@@ -172,20 +224,40 @@ async def fetch_upcoming(session: aiohttp.ClientSession, limit: int = 6) -> list
                 data = data[key]
                 break
     if not isinstance(data, list):
-        log.warning("Format de prédictions inattendu (%s)", type(data).__name__)
-        return []
+        log.warning("Format de planning inattendu (%s)", type(data).__name__)
+        return None, []
 
     now = datetime.now(timezone.utc)
-    result: list[Arbitration] = []
+    current: Arbitration | None = None
+    upcoming: list[Arbitration] = []
     for item in data:
         if not isinstance(item, dict):
             continue
-        arby = _upcoming_entry(item)
+        arby = _schedule_entry(item)
         if arby is None:
             continue
-        if arby.activation and arby.activation < now:
+        started = arby.activation is None or arby.activation <= now
+        ended = arby.expiry is not None and arby.expiry <= now
+        if ended:
             continue
-        result.append(arby)
-        if len(result) >= limit:
-            break
-    return result
+        if started:
+            current = arby  # la dernière entrée déjà commencée et non finie
+        else:
+            upcoming.append(arby)
+            if len(upcoming) >= limit:
+                break
+    upcoming.sort(key=lambda a: a.activation or now)
+    return current, upcoming
+
+
+async def probe_sources(session: aiohttp.ClientSession) -> list[tuple[str, str, str]]:
+    """Diagnostic /sources : (nom, url, résultat court) pour chaque source."""
+    results = []
+    for name, url in DIAGNOSTIC_URLS:
+        try:
+            async with session.get(url, timeout=TIMEOUT) as resp:
+                body = (await resp.text())[:180].replace("\n", " ")
+                results.append((name, url, f"HTTP {resp.status} — {body}"))
+        except Exception as exc:
+            results.append((name, url, f"ÉCHEC — {type(exc).__name__}: {exc}"))
+    return results

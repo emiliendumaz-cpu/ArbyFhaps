@@ -51,7 +51,9 @@ class TrackerCog(commands.Cog):
     async def _build_embed(self, guild_id: int) -> tuple[discord.Embed, str]:
         overrides = storage.load_guild(guild_id).get("tiers", {})
         current = await worldstate.fetch_current(self.session)
-        upcoming = await worldstate.fetch_upcoming(self.session)
+        schedule_current, upcoming = await worldstate.fetch_schedule(self.session)
+        if current is None:
+            current = schedule_current  # repli : planning communautaire
 
         embed = theme.make_embed(
             "⚖️ Suivi des Arbitrations",
@@ -72,8 +74,9 @@ class TrackerCog(commands.Cog):
         else:
             embed.add_field(
                 name="🔥 En cours",
-                value="*Donnée momentanément indisponible (API Warframe muette). "
-                      "Réessai automatique dans quelques minutes.*",
+                value="*Donnée momentanément indisponible (sources muettes ou non résolues). "
+                      "Réessai automatique dans quelques minutes — un admin peut lancer `/sources` "
+                      "pour diagnostiquer.*",
                 inline=False,
             )
             fingerprint_parts.append("none")
@@ -188,6 +191,20 @@ class TrackerCog(commands.Cog):
         await interaction.response.send_message(
             embed=theme.make_embed("🗑️ Tracker arrêté", color=theme.GREEN), ephemeral=True
         )
+
+    @app_commands.command(name="sources", description="(Admin) Diagnostique les sources de données d'arbitration.")
+    @app_commands.default_permissions(manage_guild=True)
+    async def sources(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        results = await worldstate.probe_sources(self.session)
+        embed = theme.make_embed(
+            "🩺 Diagnostic des sources",
+            "Copiez ce résultat pour ajuster le connecteur si une source a changé de format.",
+            color=theme.BLUE,
+        )
+        for name, url, verdict in results:
+            embed.add_field(name=name, value=f"`{url}`\n```{verdict[:900]}```", inline=False)
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     @app_commands.command(name="tier-set", description="(Admin) Fixe la note (F à S) d'un nœud pour ce serveur.")
     @app_commands.describe(node="Nœud, tel qu'affiché par le tracker (ex : Casta (Ceres))", tier="Note")
