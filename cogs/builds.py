@@ -13,7 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import i18n, storage, theme
+from utils import i18n, storage, theme, translate
 
 IMAGES_DIR = Path(__file__).resolve().parent.parent / "data" / "build_images"
 IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
@@ -39,21 +39,26 @@ def _image_path(build: dict) -> Path | None:
     return None
 
 
-def _build_embed(build: dict, index: int, total: int, lang: str = "fr") -> tuple[discord.Embed, discord.File | None]:
+async def _build_embed(build: dict, index: int, total: int, lang: str = "fr") -> tuple[discord.Embed, discord.File | None]:
+    # Textes rédigés à la main : traduits vers la langue de l'utilisateur
+    # (les mods/arcanes sont des noms propres, jamais traduits)
+    description = await translate.tr(build["description"], lang)
+    category = await translate.tr(build["category"], lang)
+    shards = await translate.tr(build.get("shards"), lang)
     embed = theme.make_embed(
         f"⚖️ {build['name']}",
-        f"{build['description']}\n{theme.SEPARATOR}",
+        f"{description}\n{theme.SEPARATOR}",
         color=theme.GOLD,
         footer_extra=i18n.t(lang, "b.footer", i=index + 1, n=total),
     )
     embed.add_field(name=i18n.t(lang, "b.frame"), value=build["frame"], inline=True)
-    embed.add_field(name=i18n.t(lang, "b.cat"), value=build["category"], inline=True)
+    embed.add_field(name=i18n.t(lang, "b.cat"), value=category, inline=True)
     if build.get("mods"):
         embed.add_field(name=i18n.t(lang, "b.mods"), value=build["mods"], inline=False)
     if build.get("arcanes"):
         embed.add_field(name=i18n.t(lang, "b.arcanes"), value=build["arcanes"], inline=False)
-    if build.get("shards"):
-        embed.add_field(name=i18n.t(lang, "b.shards"), value=build["shards"], inline=False)
+    if shards:
+        embed.add_field(name=i18n.t(lang, "b.shards"), value=shards, inline=False)
 
     file = None
     path = _image_path(build)
@@ -72,13 +77,14 @@ class BuildsPaginator(discord.ui.View):
         self.previous.label = i18n.t(lang, "b.prev")
         self.next.label = i18n.t(lang, "b.next")
 
-    def current(self) -> tuple[discord.Embed, discord.File | None]:
-        return _build_embed(self.builds[self.index], self.index, len(self.builds), self.lang)
+    async def current(self) -> tuple[discord.Embed, discord.File | None]:
+        return await _build_embed(self.builds[self.index], self.index, len(self.builds), self.lang)
 
     async def _flip(self, interaction: discord.Interaction, step: int):
         self.index = (self.index + step) % len(self.builds)
-        embed, file = self.current()
-        await interaction.response.edit_message(
+        await interaction.response.defer()
+        embed, file = await self.current()
+        await interaction.edit_original_response(
             embed=embed, view=self, attachments=[file] if file else []
         )
 
@@ -113,12 +119,13 @@ class BuildsCog(commands.Cog):
                 ephemeral=True,
             )
             return
+        await interaction.response.defer(thinking=True)
         view = BuildsPaginator(builds, lang)
-        embed, file = view.current()
+        embed, file = await view.current()
         if file:
-            await interaction.response.send_message(embed=embed, view=view, file=file)
+            await interaction.followup.send(embed=embed, view=view, file=file)
         else:
-            await interaction.response.send_message(embed=embed, view=view)
+            await interaction.followup.send(embed=embed, view=view)
 
     @builds.autocomplete("categorie")
     async def category_autocomplete(self, interaction: discord.Interaction, current: str):

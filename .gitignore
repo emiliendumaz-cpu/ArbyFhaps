@@ -5,6 +5,7 @@ __pycache__/
 venv/
 data/guilds/
 data/users.json
+data/translations.json
 *.log
 EE.log
 ee.log

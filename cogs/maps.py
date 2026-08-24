@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import i18n, storage, theme
+from utils import i18n, storage, theme, translate
 
 
 class MapsCog(commands.Cog):
@@ -75,6 +75,7 @@ class MapsCog(commands.Cog):
                 ephemeral=True,
             )
             return
+        await interaction.response.defer(thinking=True)
         embed = theme.make_embed(
             i18n.t(lang, "map.list.title"),
             f"{i18n.t(lang, 'map.list.desc')}\n{theme.SEPARATOR}",
@@ -82,12 +83,14 @@ class MapsCog(commands.Cog):
             footer_extra=i18n.t(lang, "map.count", n=len(data['maps'])),
         )
         for entry in data["maps"].values():
+            mode = await translate.tr(entry["mode"], lang)
+            notes = await translate.tr(entry["notes"], lang) if entry["notes"] else ""
             embed.add_field(
-                name=f"📍 {entry['nom']} — {entry['mode']}",
-                value=f"**Compo :** {entry['compo']}" + (f"\n📝 {entry['notes']}" if entry["notes"] else ""),
+                name=f"📍 {entry['nom']} — {mode}",
+                value=f"**Compo :** {entry['compo']}" + (f"\n📝 {notes}" if notes else ""),
                 inline=False,
             )
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="map", description="Affiche la compo recommandée pour une map.")
     @app_commands.describe(nom="Nom de la map")
@@ -101,11 +104,14 @@ class MapsCog(commands.Cog):
                 ephemeral=True,
             )
             return
-        embed = theme.make_embed(f"📍 {entry['nom']} — {entry['mode']}", color=theme.GREEN)
+        await interaction.response.defer(thinking=True)
+        mode = await translate.tr(entry["mode"], lang)
+        notes = await translate.tr(entry["notes"], lang) if entry["notes"] else ""
+        embed = theme.make_embed(f"📍 {entry['nom']} — {mode}", color=theme.GREEN)
         embed.add_field(name=i18n.t(lang, "map.compo.reco"), value=entry["compo"], inline=False)
-        if entry["notes"]:
-            embed.add_field(name=i18n.t(lang, "map.notes"), value=entry["notes"], inline=False)
-        await interaction.response.send_message(embed=embed)
+        if notes:
+            embed.add_field(name=i18n.t(lang, "map.notes"), value=notes, inline=False)
+        await interaction.followup.send(embed=embed)
 
     @map_show.autocomplete("nom")
     @map_remove.autocomplete("nom")
