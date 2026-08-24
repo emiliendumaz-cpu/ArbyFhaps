@@ -55,6 +55,16 @@
     "image": "cyte-09-em.png"
   },
   {
+    "name": "Citrine — Compo gaz (arbi BB)",
+    "frame": "Citrine",
+    "category": "DPS / Support",
+    "description": "Prend la place de Vauban sur les **compos gaz**. On cast le BB de l'Helminth de Nokko et on garde le buff actif sur toute la durée de la partie, tout en maintenant le 2 et le 3 actifs.\nStats : 230 % Force · 336 % Durée · 45 % Efficacité · 79 % Portée.",
+    "mods": "Power Donation, Power Drift, Narrow Minded, Precision Intensify, Constitution, Augur Message, Blind Rage, Archon Stretch, Nira's Hatred, Archon Continuity",
+    "arcanes": "Arcane Concentration, Arcane Bellicose",
+    "shards": "2× +37,5 % Vitesse d'incantation (jaune tauforgé), 2× +22,5 % Vélocité de parkour (jaune tauforgé), 1× +15 % Durée de pouvoir (cramoisi tauforgé)",
+    "image": "citrine-arbi-bb.png"
+  },
+  {
     "name": "Focus & Conseils généraux Arbitration",
     "frame": "—",
     "category": "Général",
