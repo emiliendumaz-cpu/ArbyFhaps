@@ -1,0 +1,16 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Données locales modifiées à chaud par le bot (on garde les fichiers d'exemple versionnés,
+# mais pas les sauvegardes temporaires)
+data/*.bak
+
+# Logs uploadés — ne doivent JAMAIS être conservés
+*.log
+EE.log

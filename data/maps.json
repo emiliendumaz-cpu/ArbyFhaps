@@ -1,0 +1,27 @@
+{
+  "hydron (sedna)": {
+    "type": "Défense",
+    "compo": ["Octavia", "Wisp", "Nekros", "Frost"],
+    "notes": "Map compacte : regrouper les ennemis au point. Nekros pour le desecrate des Vitus."
+  },
+  "casta (ceres)": {
+    "type": "Interception",
+    "compo": ["Vauban", "Wisp", "Octavia", "Khora"],
+    "notes": "Interception = meilleure map Vitus/heure. Un joueur par point, Vauban tient deux points."
+  },
+  "seimeni (ceres)": {
+    "type": "Défense",
+    "compo": ["Octavia", "Saryn", "Wisp", "Nekros"],
+    "notes": "Grande zone ouverte, Saryn nettoie très bien ici."
+  },
+  "odin (mercure)": {
+    "type": "Interception",
+    "compo": ["Vauban", "Octavia", "Wisp", "Nekros"],
+    "notes": "Points proches les uns des autres, rotation facile."
+  },
+  "helene (saturne)": {
+    "type": "Défense",
+    "compo": ["Octavia", "Frost", "Wisp", "Nekros"],
+    "notes": "Spawns réguliers, bonne map pour les runs longues."
+  }
+}

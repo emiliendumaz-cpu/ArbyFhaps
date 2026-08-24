@@ -1,0 +1,94 @@
+{
+  "Warframes": [
+    {
+      "nom": "Octavia — AFK-proof Arbitration",
+      "description": "La valeur sûre des arbitrations longues. Mallet + Resonator scalent avec les dégâts ennemis.",
+      "mods": "Umbral Intensify, Augur Reach, Stretch, Overextended, Primed Continuity, Constitution, Adaptation, Vitality",
+      "conseils": "Arcanes : Molt Efficiency + Energize. Crouch-spam sur le Metronome pour l'invisibilité."
+    },
+    {
+      "nom": "Saryn — Nuke Défense",
+      "description": "Nettoie les défenses/interceptions. Les spores scalent à l'infini.",
+      "mods": "Umbral Intensify, Umbral Vitality, Adaptation, Stretch, Primed Continuity, Molt Reconstruct, Regenerative Molt, Augur Reach",
+      "conseils": "Garder les spores actives entre les vagues. Arme de spread : Epitaph ou Cedo."
+    },
+    {
+      "nom": "Wisp — Support universel",
+      "description": "Motes (vie + vitesse d'attaque + CC) pour toute l'escouade. Indispensable en compo organisée.",
+      "mods": "Primed Continuity, Umbral Intensify, Augur Message, Constitution, Stretch, Adaptation, Umbral Vitality, Archon Stretch",
+      "conseils": "Poser les motes au point de regroupement. Breach Surge pour le nuke avec une arme à multishot."
+    },
+    {
+      "nom": "Nekros — Farm de Vitus",
+      "description": "Desecrate augmente les drops de Vitus Essence (~54% de chances en plus par cadavre).",
+      "mods": "Despoil, Health Conversion, Equilibrium, Adaptation, Umbral Vitality, Primed Continuity, Stretch, Overextended",
+      "conseils": "Une arme à découpe (slash) démultiplie les cadavres desecratables."
+    },
+    {
+      "nom": "Vauban — Roi de l'Interception",
+      "description": "Vortex regroupe et neutralise tout. Tient un point (voire deux) tout seul.",
+      "mods": "Primed Continuity, Streamline, Stretch, Overextended, Umbral Intensify, Adaptation, Constitution, Augur Reach",
+      "conseils": "Photon Strike + augment Photon Repeater pour tuer les drones d'arbitration groupés."
+    },
+    {
+      "nom": "Khora — Cage à Vitus",
+      "description": "Strangledome + Whipclaw : CC, dégâts qui scalent et zone de farm bien délimitée.",
+      "mods": "Umbral Intensify, Accumulating Whipclaw, Stretch, Primed Continuity, Adaptation, Umbral Vitality, Streamline, Augur Reach",
+      "conseils": "Venari en mode soin. Pilfering Strangledome pour encore plus de loot."
+    }
+  ],
+  "Armes": [
+    {
+      "nom": "Phenmor (Incarnon)",
+      "description": "Tue les drones d'arbitration (immunisés aux pouvoirs) à n'importe quel niveau.",
+      "mods": "Serration, Split Chamber, Vital Sense, Point Strike, Galvanized Aptitude, Hunter Munitions, élémentaires selon faction",
+      "conseils": "Priorité absolue : détruire le drone AVANT de tuer les ennemis qu'il protège."
+    },
+    {
+      "nom": "Epitaph — Primer",
+      "description": "Prime les ennemis (viral + radiation) pour les gros hits de Whipclaw/Breach Surge.",
+      "mods": "Galvanized Shot, Hornet Strike, viral, Lethal Torrent",
+      "conseils": "Tir non chargé = prime de zone. Parfait sur Wisp et Khora."
+    },
+    {
+      "nom": "Kuva Nukor — Anti-drone secondaire",
+      "description": "Chaînes électriques, fait fondre les drones et prime le reste.",
+      "mods": "Hornet Strike, Galvanized Chamber, Galvanized Shot, viral/heat",
+      "conseils": "Le beam chaîne sur les ennemis autour du drone sans être bloqué par sa bulle."
+    },
+    {
+      "nom": "Glaive Prime — Slash à la demande",
+      "description": "Détonation à distance, forced slash : idéal pour Nekros (cadavres en morceaux).",
+      "mods": "Condition Overload, Primed Pressure Point, Organ Shatter, Sacrificial Steel, Volatile Quick Return",
+      "conseils": "Lancer + détoner au milieu du pack regroupé par Vortex/Strangledome."
+    }
+  ],
+  "Compagnons & Arcanes": [
+    {
+      "nom": "Panzer Vulpaphyla",
+      "description": "Immortel (revient en mode larve), propage le viral avec Viral Quills.",
+      "mods": "Viral Quills, Martyr Symbiosis, Pack Leader, Bite, Maul",
+      "conseils": "Le compagnon par défaut pour toute run longue."
+    },
+    {
+      "nom": "Arcanes d'arbitration",
+      "description": "Achetables chez l'Arbiter avec la Vitus Essence.",
+      "mods": "Arcane Energize (drops), Molt Efficiency, Molt Augmented, Molt Reconstruct, Molt Vigor",
+      "conseils": "Molt Augmented (+60% force à 250 kills) est parfait pour les runs longues d'arbitration."
+    },
+    {
+      "nom": "Mods d'arbitration à acheter",
+      "description": "Chez l'Arbiter des Hexis, contre de la Vitus Essence.",
+      "mods": "Adaptation, Rolling Guard, Vigorous Swap, Aerodynamic, Power Donation",
+      "conseils": "Adaptation et Rolling Guard sont prioritaires : ils servent partout."
+    }
+  ],
+  "Règles d'or Arbitration": [
+    {
+      "nom": "Les bases à connaître",
+      "description": "Ce qui change par rapport à une mission normale.",
+      "mods": "—",
+      "conseils": "Pas de revive automatique (un allié doit ramasser votre jeton). Les drones rendent les ennemis immunisés aux pouvoirs : TOUJOURS tuer le drone d'abord. Rotations AABBCC... toutes les 2 vagues/zones au lieu de AABC. Ennemis +60% de stats. Une seule vie par vague de revive."
+    }
+  ]
+}
