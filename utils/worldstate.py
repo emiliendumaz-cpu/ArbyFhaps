@@ -170,10 +170,15 @@ async def fetch_current(session: aiohttp.ClientSession) -> Arbitration | None:
 def _schedule_entry(item: dict) -> Arbitration | None:
     """Convertit une entrée de planning, tolérant plusieurs formats.
 
-    Formats gérés :
-     - semlar : {"start": …, "end": …, "solnode": "SolNode123",
-                 "solnodedata": {"name"/"node", "planet", "enemy", "type", "tile"}}
-     - générique : {"node"/"name", "type"/"mission_type", "activation"/"start"/"time"}
+    Format semlar (constaté via /sources) :
+      {"start": "2024-10-10T02:00:00.000Z", "end": "2024-10-10T03:05:00.000Z",
+       "missiontype": "EliteAlertMission", "solnode": "SolNode211",
+       "solnodedata": {"name": "Ose [Europa]", "tile": "Ose", "planet": …,
+                       "enemy": …, "type": …}}
+    (le "missiontype" racine est un marqueur générique d'arbitration, le vrai
+    mode est dans solnodedata.type)
+    Format générique : {"node"/"name", "type"/"mission_type",
+                        "activation"/"start"/"time"}
     """
     nested = item.get("solnodedata") if isinstance(item.get("solnodedata"), dict) else {}
 
@@ -181,20 +186,24 @@ def _schedule_entry(item: dict) -> Arbitration | None:
     if not node:
         name = nested.get("name") or item.get("name")
         planet = nested.get("planet") or item.get("planet")
-        if name and planet:
+        if name and planet and str(planet).lower() not in str(name).lower():
             node = f"{name} ({planet})"
         else:
             node = name
     if not node or _RAW_SOLNODE_RE.match(str(node).strip()):
         return None
+    # semlar écrit « Ose [Europa] » : on normalise en « Ose (Europa) »
+    node = str(node).replace("[", "(").replace("]", ")").strip()
 
     type_raw = (nested.get("type") or item.get("type") or item.get("typeKey")
                 or item.get("mission_type") or "?")
     type_fr, type_key = _normalize_type(str(type_raw))
+    if type_key in ("?", "elitealertmission", ""):
+        type_fr, type_key = "Arbitration", "?"
     start = _parse_time(item.get("activation") or item.get("start") or item.get("time"))
     end = _parse_time(item.get("expiry") or item.get("end"))
     return Arbitration(
-        node=str(node),
+        node=node,
         mission_type=type_fr,
         type_key=type_key,
         enemy=str(nested.get("enemy") or item.get("enemy") or ""),
@@ -203,11 +212,21 @@ def _schedule_entry(item: dict) -> Arbitration | None:
     )
 
 
-async def fetch_schedule(session: aiohttp.ClientSession, limit: int = 6) -> tuple[Arbitration | None, list[Arbitration]]:
-    """Planning best-effort : (en cours d'après le planning, prochaines).
+# Le planning semlar est un gros fichier déterministe couvrant des mois :
+# on le met en cache (6 h en succès, 10 min après un échec).
+_CACHE_TTL_OK = 6 * 3600
+_CACHE_TTL_FAIL = 600
+_schedule_cache: dict = {"data": None, "fetched_at": None}
 
-    Essaie chaque source de SCHEDULE_URLS ; renvoie (None, []) si tout est KO.
-    """
+
+async def _get_schedule_data(session: aiohttp.ClientSession):
+    now = datetime.now(timezone.utc)
+    fetched_at = _schedule_cache["fetched_at"]
+    if fetched_at is not None:
+        ttl = _CACHE_TTL_OK if _schedule_cache["data"] is not None else _CACHE_TTL_FAIL
+        if (now - fetched_at).total_seconds() < ttl:
+            return _schedule_cache["data"]
+
     data = None
     for name, url in SCHEDULE_URLS:
         try:
@@ -215,6 +234,17 @@ async def fetch_schedule(session: aiohttp.ClientSession, limit: int = 6) -> tupl
             break
         except Exception as exc:
             log.warning("Planning %s indisponible : %s", name, exc)
+    _schedule_cache["data"] = data
+    _schedule_cache["fetched_at"] = now
+    return data
+
+
+async def fetch_schedule(session: aiohttp.ClientSession, limit: int = 6) -> tuple[Arbitration | None, list[Arbitration]]:
+    """Planning best-effort : (en cours d'après le planning, prochaines).
+
+    Essaie chaque source de SCHEDULE_URLS ; renvoie (None, []) si tout est KO.
+    """
+    data = await _get_schedule_data(session)
     if data is None:
         return None, []
 
