@@ -87,7 +87,7 @@ class MapsCog(commands.Cog):
             notes = await translate.tr(entry["notes"], lang) if entry["notes"] else ""
             embed.add_field(
                 name=f"📍 {entry['nom']} — {mode}",
-                value=f"**Compo :** {entry['compo']}" + (f"\n📝 {notes}" if notes else ""),
+                value=f"{i18n.t(lang, 'map.compo.label')} {entry['compo']}" + (f"\n📝 {notes}" if notes else ""),
                 inline=False,
             )
         await interaction.followup.send(embed=embed)

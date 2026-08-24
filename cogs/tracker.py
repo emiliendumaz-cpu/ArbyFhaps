@@ -51,7 +51,7 @@ class TrackerCog(commands.Cog):
 
     async def _build_embed(self, guild_id: int, lang: str = "fr") -> tuple[discord.Embed, str]:
         overrides = storage.load_guild(guild_id).get("tiers", {})
-        current, upcoming = await worldstate.get_current_and_upcoming(self.session)
+        current, upcoming = await worldstate.get_current_and_upcoming(self.session, lang=lang)
 
         embed = theme.make_embed(
             i18n.t(lang, "tr.title"),
@@ -205,7 +205,7 @@ class TrackerCog(commands.Cog):
         await interaction.followup.send(embed=embed, file=file, ephemeral=True)
 
     @app_commands.command(name="tier-set", description="(Admin) Fixe la note (F à S) d'un nœud pour ce serveur.")
-    @app_commands.describe(node="Nœud, tel qu'affiché par le tracker (ex : Casta (Ceres))", tier="Note")
+    @app_commands.describe(node="Nœud (autocomplétion recommandée)", tier="Note")
     @app_commands.choices(tier=[app_commands.Choice(name=t, value=t) for t in worldstate.TIER_ORDER])
     @app_commands.default_permissions(manage_guild=True)
     async def tier_set(self, interaction: discord.Interaction, node: str, tier: str):
@@ -221,6 +221,16 @@ class TrackerCog(commands.Cog):
                 color=theme.GREEN,
             )
         )
+
+    @tier_set.autocomplete("node")
+    async def tier_node_autocomplete(self, interaction: discord.Interaction, current: str):
+        nodes = await worldstate.known_nodes(self.session)
+        current_lower = current.lower()
+        return [
+            app_commands.Choice(name=f"{name} ({solnode})", value=solnode)
+            for solnode, name in nodes
+            if current_lower in name.lower() or current_lower in solnode.lower()
+        ][:25]
 
 
 async def setup(bot: commands.Bot):

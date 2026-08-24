@@ -53,9 +53,9 @@ _CATALOG: dict[str, dict[str, str]] = {
         "no": "✅ Språk satt til **norsk** — boten svarer deg nå på norsk.",
     },
     "lang.note": {
-        "fr": "Ce réglage ne concerne que vous. Les textes rédigés par les admins (builds, maps) restent dans leur langue d'origine.",
-        "en": "This setting only affects you. Admin-written content (builds, maps) stays in its original language.",
-        "no": "Denne innstillingen gjelder bare deg. Innhold skrevet av admins (builds, kart) beholder originalspråket.",
+        "fr": "Ce réglage ne concerne que vous. Les textes rédigés par les admins (builds, maps) sont traduits automatiquement — seuls les noms de mods, d'arcanes et de frames restent en l'état.",
+        "en": "This setting only affects you. Admin-written content (builds, maps) is translated automatically — only mod, arcane and frame names stay as-is.",
+        "no": "Denne innstillingen gjelder bare deg. Innhold skrevet av admins (builds, kart) oversettes automatisk — bare navn på mods, arcanes og frames beholdes som de er.",
     },
     # ----- Générique -----
     "err.title": {"fr": "❌ Oups", "en": "❌ Oops", "no": "❌ Oi"},
@@ -115,6 +115,7 @@ _CATALOG: dict[str, dict[str, str]] = {
         "no": "Skriv `/map <navn>` for detaljer om et kart.",
     },
     "map.count": {"fr": "{n} map(s)", "en": "{n} map(s)", "no": "{n} kart"},
+    "map.compo.label": {"fr": "**Compo :**", "en": "**Comp:**", "no": "**Oppsett:**"},
     # ----- Builds -----
     "b.frame": {"fr": "🤖 Warframe", "en": "🤖 Warframe", "no": "🤖 Warframe"},
     "b.cat": {"fr": "🏷️ Catégorie", "en": "🏷️ Category", "no": "🏷️ Kategori"},

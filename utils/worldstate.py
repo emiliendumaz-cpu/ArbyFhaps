@@ -5,7 +5,7 @@ consomme les mêmes :
  - https://browse.wf/arbys.txt : planning complet, une ligne « epoch,SolNodeXXX »
    par heure (source déterministe pré-générée)
  - ExportRegions.json : méta de chaque nœud (mode MT_*, faction FC_*, clés de nom)
- - dict.fr.json (puis dict.en.json en secours) : traduction des clés de nom
+ - dict.<langue>.json : traduction des clés de nom (fr, en selon l'utilisateur)
  - supplemental-data/arbyTiers.js : notes officielles S→F par nœud (défaut F)
 
 La note affichée suit la priorité : override serveur (/tier-set) > note
@@ -24,14 +24,16 @@ import aiohttp
 BASE = "https://browse.wf"
 ARBYS_TXT_URL = f"{BASE}/arbys.txt"
 REGIONS_URL = f"{BASE}/warframe-public-export-plus/ExportRegions.json"
-DICT_URLS = [f"{BASE}/warframe-public-export-plus/dict.fr.json",
-             f"{BASE}/warframe-public-export-plus/dict.en.json"]
+def _dict_url(lang: str) -> str:
+    # Warframe n'existe pas en norvégien : les utilisateurs "no" reçoivent l'anglais
+    code = "fr" if lang == "fr" else "en"
+    return f"{BASE}/warframe-public-export-plus/dict.{code}.json"
 TIERS_URL = f"{BASE}/supplemental-data/arbyTiers.js"
 
 DIAGNOSTIC_URLS = [
     ("planning (arbys.txt)", ARBYS_TXT_URL),
     ("nœuds (ExportRegions)", REGIONS_URL),
-    ("traductions FR", DICT_URLS[0]),
+    ("traductions FR", f"{BASE}/warframe-public-export-plus/dict.fr.json"),
     ("notes (arbyTiers.js)", TIERS_URL),
 ]
 
@@ -43,28 +45,36 @@ log = logging.getLogger(__name__)
 TIER_ORDER = ["S", "A", "B", "C", "D", "F"]
 TIER_EMOJI = {"S": "🟡", "A": "🟢", "B": "🔵", "C": "⚪", "D": "🟠", "F": "🔴"}
 
-# Modes de mission (clés MT_* d'ExportRegions) → nom FR
-TYPE_FR = {
-    "MT_SURVIVAL": "Survie",
-    "MT_DEFENSE": "Défense",
-    "MT_TERRITORY": "Interception",
-    "MT_EXCAVATE": "Excavation",
-    "MT_PURIFY": "Sauvetage Infesté",
-    "MT_EVACUATION": "Défection",
-    "MT_ARTIFACT": "Perturbation",
-    "MT_CORRUPTION": "Déluge du Vide",
-    "MT_VOID_CASCADE": "Cascade du Vide",
-    "MT_ARMAGEDDON": "Armageddon du Vide",
-    "MT_ALCHEMY": "Alchimie",
+# Modes de mission (clés MT_* d'ExportRegions) → nom par langue
+# (pas de VF officielle en norvégien : les joueurs "no" utilisent les noms anglais)
+TYPE_NAMES = {
+    "MT_SURVIVAL": {"fr": "Survie", "en": "Survival"},
+    "MT_DEFENSE": {"fr": "Défense", "en": "Defense"},
+    "MT_TERRITORY": {"fr": "Interception", "en": "Interception"},
+    "MT_EXCAVATE": {"fr": "Excavation", "en": "Excavation"},
+    "MT_PURIFY": {"fr": "Sauvetage Infesté", "en": "Infested Salvage"},
+    "MT_EVACUATION": {"fr": "Défection", "en": "Defection"},
+    "MT_ARTIFACT": {"fr": "Perturbation", "en": "Disruption"},
+    "MT_CORRUPTION": {"fr": "Déluge du Vide", "en": "Void Flood"},
+    "MT_VOID_CASCADE": {"fr": "Cascade du Vide", "en": "Void Cascade"},
+    "MT_ARMAGEDDON": {"fr": "Armageddon du Vide", "en": "Void Armageddon"},
+    "MT_ALCHEMY": {"fr": "Alchimie", "en": "Alchemy"},
 }
 
-FACTION_FR = {
-    "FC_GRINEER": "Grineer",
-    "FC_CORPUS": "Corpus",
-    "FC_INFESTATION": "Infestés",
-    "FC_OROKIN": "Corrompus",
-    "FC_MITW": "Le Murmure",
+FACTION_NAMES = {
+    "FC_GRINEER": {"fr": "Grineer", "en": "Grineer"},
+    "FC_CORPUS": {"fr": "Corpus", "en": "Corpus"},
+    "FC_INFESTATION": {"fr": "Infestés", "en": "Infested"},
+    "FC_OROKIN": {"fr": "Corrompus", "en": "Corrupted"},
+    "FC_MITW": {"fr": "Le Murmure", "en": "The Murmur"},
 }
+
+
+def _named(table: dict, key: str, lang: str) -> str | None:
+    entry = table.get(key)
+    if not entry:
+        return None
+    return entry.get(lang) or entry["en"]
 
 # Repli si arbyTiers.js est indisponible (sinon la note officielle prime)
 TYPE_TIER = {
@@ -117,7 +127,7 @@ _TTL_STATIC = 24 * 3600
 _TTL_FAIL = 600
 
 _schedule_cache: dict = {"fetched_at": None, "entries": None}
-_static_cache: dict = {"fetched_at": None, "regions": None, "dict": None, "tiers": None}
+_static_cache: dict = {"fetched_at": None, "regions": None, "dicts": {}, "tiers": None}
 
 
 def _bundled_tiers() -> dict | None:
@@ -176,10 +186,13 @@ async def _load_schedule(session: aiohttp.ClientSession) -> list[tuple[int, str]
     return entries
 
 
-async def _load_static(session: aiohttp.ClientSession) -> dict:
-    """Charge ExportRegions, le dictionnaire de traduction et arbyTiers."""
+async def _load_static(session: aiohttp.ClientSession, lang: str = "fr") -> dict:
+    """Charge ExportRegions, arbyTiers et le dictionnaire de la langue demandée."""
+    dict_url = _dict_url(lang)
     ok = _static_cache["regions"] is not None
     if not _expired(_static_cache["fetched_at"], ok, _TTL_STATIC):
+        if dict_url not in _static_cache["dicts"]:
+            await _load_dict(session, dict_url)
         return _static_cache
 
     regions = None
@@ -190,16 +203,8 @@ async def _load_static(session: aiohttp.ClientSession) -> dict:
     except Exception as exc:
         log.warning("ExportRegions indisponible : %s", exc)
 
-    loc_dict = None
-    for url in DICT_URLS:
-        try:
-            loc_dict = await _get_json(session, url, timeout=BIG_TIMEOUT)
-            if isinstance(loc_dict, dict):
-                log.info("Dictionnaire chargé : %s (%d clés)", url, len(loc_dict))
-                break
-            loc_dict = None
-        except Exception as exc:
-            log.warning("Dictionnaire %s indisponible : %s", url, exc)
+    _static_cache["dicts"] = {}
+    await _load_dict(session, dict_url)
 
     tiers = None
     try:
@@ -215,10 +220,22 @@ async def _load_static(session: aiohttp.ClientSession) -> dict:
             log.info("Notes officielles : copie locale de secours (%d nœuds)", len(tiers))
 
     _static_cache.update(
-        regions=regions, dict=loc_dict, tiers=tiers,
+        regions=regions, tiers=tiers,
         fetched_at=datetime.now(timezone.utc),
     )
     return _static_cache
+
+
+async def _load_dict(session: aiohttp.ClientSession, url: str) -> None:
+    try:
+        loc_dict = await _get_json(session, url, timeout=BIG_TIMEOUT)
+        if isinstance(loc_dict, dict):
+            log.info("Dictionnaire chargé : %s (%d clés)", url, len(loc_dict))
+            _static_cache["dicts"][url] = loc_dict
+            return
+    except Exception as exc:
+        log.warning("Dictionnaire %s indisponible : %s", url, exc)
+    _static_cache["dicts"][url] = None
 
 
 # ---------------------------------------------------------------------------
@@ -233,9 +250,9 @@ def _loc(loc_dict: dict | None, key: str | None) -> str | None:
     return None
 
 
-def _make_arbitration(ts: int, solnode: str, static: dict) -> Arbitration:
+def _make_arbitration(ts: int, solnode: str, static: dict, lang: str = "fr") -> Arbitration:
     regions = static.get("regions") or {}
-    loc_dict = static.get("dict")
+    loc_dict = static.get("dicts", {}).get(_dict_url(lang))
     tiers = static.get("tiers")
 
     meta = regions.get(solnode, {}) if isinstance(regions, dict) else {}
@@ -244,8 +261,10 @@ def _make_arbitration(ts: int, solnode: str, static: dict) -> Arbitration:
     node = f"{name} ({system})" if system else name
 
     type_key = str(meta.get("missionType") or "?")
-    mission_type = TYPE_FR.get(type_key) or _loc(loc_dict, meta.get("missionName")) or "Arbitration"
-    enemy = FACTION_FR.get(str(meta.get("faction")), str(meta.get("faction") or ""))
+    mission_type = (_named(TYPE_NAMES, type_key, lang)
+                    or _loc(loc_dict, meta.get("missionName")) or "Arbitration")
+    faction_key = str(meta.get("faction") or "")
+    enemy = _named(FACTION_NAMES, faction_key, lang) or faction_key
 
     # Même règle que le site : nœud absent d'arbyTiers → F ; fichier absent → repli
     source_tier = (tiers.get(solnode, "F") if tiers else None)
@@ -264,25 +283,38 @@ def _make_arbitration(ts: int, solnode: str, static: dict) -> Arbitration:
 
 
 async def get_current_and_upcoming(
-    session: aiohttp.ClientSession, limit: int = 6
+    session: aiohttp.ClientSession, limit: int = 6, lang: str = "fr"
 ) -> tuple[Arbitration | None, list[Arbitration]]:
     """(arbitration en cours, prochaines) d'après le planning browse.wf."""
     entries = await _load_schedule(session)
     if not entries:
         return None, []
-    static = await _load_static(session)
+    static = await _load_static(session, lang)
 
     now = int(datetime.now(timezone.utc).timestamp())
     current: Arbitration | None = None
     upcoming: list[Arbitration] = []
     for ts, solnode in entries:
         if ts <= now < ts + 3600:
-            current = _make_arbitration(ts, solnode, static)
+            current = _make_arbitration(ts, solnode, static, lang)
         elif ts > now:
-            upcoming.append(_make_arbitration(ts, solnode, static))
+            upcoming.append(_make_arbitration(ts, solnode, static, lang))
             if len(upcoming) >= limit:
                 break
     return current, upcoming
+
+
+async def known_nodes(session: aiohttp.ClientSession) -> list[tuple[str, str]]:
+    """Nœuds uniques du planning [(solnode, nom affiché FR)], pour l'autocomplétion."""
+    entries = await _load_schedule(session)
+    if not entries:
+        return []
+    static = await _load_static(session, "fr")
+    seen: dict[str, str] = {}
+    for _, solnode in entries:
+        if solnode not in seen:
+            seen[solnode] = _make_arbitration(0, solnode, static, "fr").node
+    return sorted(seen.items(), key=lambda kv: kv[1])
 
 
 # ---------------------------------------------------------------------------
@@ -318,7 +350,7 @@ async def inspect_schedule(session: aiohttp.ClientSession) -> str:
         f"{len(entries)} heures de planning",
         f"Couverture : {first:%Y-%m-%d %H:%M} → {last:%Y-%m-%d %H:%M} UTC",
         f"Nœuds connus : {len(static.get('regions') or {})} | Traductions : "
-        f"{'oui' if static.get('dict') else 'NON'} | Notes officielles : "
+        f"{'oui' if static.get('dicts', {}).get(_dict_url('fr')) else 'NON'} | Notes officielles : "
         f"{len(static.get('tiers') or {}) or 'NON'}",
         f"En cours : {current.node + ' · ' + current.mission_type if current else 'NON TROUVÉE'}",
         f"Prochaines trouvées : {len(upcoming)}",
