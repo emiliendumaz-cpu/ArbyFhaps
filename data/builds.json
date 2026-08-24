@@ -57,6 +57,60 @@
   ],
   "Armes": [
     {
+      "nom": "Akarius",
+      "description": "Lance-roquettes à tête chercheuse : nettoie les packs regroupés (Larva, Vortex, Strangledome) sans viser.",
+      "mods": "Hornet Strike, Galvanized Shot, Barrel Diffusion, Lethal Torrent, Primed Fulmination, Galvanized Diffusion, élémentaires selon faction",
+      "conseils": "Prendre l'Akarius Prime si dispo. Attention aux dégâts auto-infligés : Primed Sure Footed ou tir à distance."
+    },
+    {
+      "nom": "Afentis",
+      "description": "Le harpon de support : la lance plantée (tir alterné) diffuse des buffs à toute l'escouade — pilier des compos prebuff.",
+      "mods": "Serration, Split Chamber, Galvanized Chamber, Vigilante Armaments, Vile Acceleration, élémentaires selon faction",
+      "conseils": "Synergie naturelle avec Jade. Replanter la lance au point de regroupement à chaque rotation pour garder les buffs actifs."
+    },
+    {
+      "nom": "Sobek (Acid Shells)",
+      "description": "Chaque kill déclenche une explosion corrosive qui scale avec la vie des ennemis : nuke de zone en chaîne.",
+      "mods": "Acid Shells (augment), Primed Point Blank, Galvanized Hell, Galvanized Savvy, Blaze, Vicious Spread, élémentaires",
+      "conseils": "Un seul kill dans un pack regroupé fait tout exploser en cascade. Plus les ennemis sont haut niveau, plus ça tape."
+    },
+    {
+      "nom": "Kuva Sobek (Acid Shells)",
+      "description": "La version ultime du Sobek pour Acid Shells : meilleures stats de base + bonus élémentaire de progéniteur.",
+      "mods": "Acid Shells (augment), Primed Point Blank, Galvanized Hell, Galvanized Savvy, Blaze, Vicious Spread",
+      "conseils": "Bonus de progéniteur Toxine recommandé (se combine en corrosif). LE nuke méta des arbitrations en escouade organisée."
+    },
+    {
+      "nom": "Boar (Incarnon)",
+      "description": "En mode incarnon, pluie de projectiles explosifs : vide l'écran en quelques tirs.",
+      "mods": "Primed Point Blank, Galvanized Hell, Galvanized Savvy, Blaze, Critical Deceleration, élémentaires selon faction",
+      "conseils": "L'adaptateur incarnon s'obtient via les Circuits du Duviri. Recharger le mode incarnon sur les trash mobs."
+    },
+    {
+      "nom": "Strun (Incarnon)",
+      "description": "En mode incarnon, les tirs ricochent en AoE : excellent contre les vagues denses et les drones.",
+      "mods": "Primed Point Blank, Galvanized Hell, Galvanized Savvy, Blaze, Critical Deceleration, élémentaires selon faction",
+      "conseils": "Le Strun Wraith ou Prime comme base. Très bon compromis mono-cible (drones) / AoE."
+    },
+    {
+      "nom": "Kohm",
+      "description": "Shotgun à montée en cadence avec un statut énorme : strip corrosif et découpe de zone en continu.",
+      "mods": "Primed Point Blank, Galvanized Hell, Galvanized Savvy, Blaze, Vicious Spread, corrosif ou viral/slash",
+      "conseils": "Le Kuva Kohm en version ultime. Laisser la cadence monter avant d'entrer dans le pack."
+    },
+    {
+      "nom": "Okina Prime (Melee Influence)",
+      "description": "Dagues doubles très rapides + arcane Melee Influence : les procs électriques se propagent à toute la zone.",
+      "mods": "Primed Pressure Point, Condition Overload, Weeping Wounds, Berserker Fury, Focus Energy, Shocking Touch, Primed Fever Strike",
+      "conseils": "L'arcane Melee Influence est le cœur du build : viser ~100% de chance de statut avec de l'électrique."
+    },
+    {
+      "nom": "Praedos (Incarnon)",
+      "description": "Tonfas incarnon : bonus permanents de vitesse de déplacement et de parkour — l'arme utilitaire des runs efficaces.",
+      "mods": "Primed Pressure Point, Condition Overload, Weeping Wounds, Berserker Fury, Organ Shatter, élémentaires",
+      "conseils": "Se joue surtout pour la mobilité : garder le mode incarnon actif pour les buffs de déplacement."
+    },
+    {
       "nom": "Phenmor (Incarnon)",
       "description": "Tue les drones d'arbitration (immunisés aux pouvoirs) à n'importe quel niveau.",
       "mods": "Serration, Split Chamber, Vital Sense, Point Strike, Galvanized Aptitude, Hunter Munitions, élémentaires selon faction",

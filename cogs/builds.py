@@ -28,7 +28,8 @@ def _category_embed(category: str, entries: list[dict]) -> discord.Embed:
         title=f"📘 Builds Arbitration — {category}",
         color=discord.Color.gold(),
     )
-    for entry in entries:
+    total = len(embed.title)
+    for i, entry in enumerate(entries):
         lines = []
         if entry.get("description"):
             lines.append(entry["description"])
@@ -36,7 +37,14 @@ def _category_embed(category: str, entries: list[dict]) -> discord.Embed:
             lines.append(f"**Mods :** {entry['mods']}")
         if entry.get("conseils"):
             lines.append(f"💡 {entry['conseils']}")
-        embed.add_field(name=entry.get("nom", "Build"), value="\n".join(lines)[:1024], inline=False)
+        name = entry.get("nom", "Build")
+        value = "\n".join(lines)[:1024]
+        # Limite Discord : 6000 caractères par embed. On s'arrête avant.
+        if total + len(name) + len(value) > 5800:
+            embed.set_footer(text=f"… et {len(entries) - i} autre(s) build(s) — catégorie trop pleine pour tout afficher.")
+            break
+        embed.add_field(name=name, value=value, inline=False)
+        total += len(name) + len(value)
     if not entries:
         embed.description = "Aucun build dans cette catégorie."
     return embed
