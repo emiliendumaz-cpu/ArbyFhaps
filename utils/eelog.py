@@ -77,12 +77,15 @@ class RunReport:
     players: list[str] = field(default_factory=list)
     warframes: list[str] = field(default_factory=list)
     ended_properly: bool = False
-    notes: list[str] = field(default_factory=list)
+    # Remarques sous forme de clés de traduction (voir utils/i18n.py) :
+    # liste de tuples (clé, paramètres de format).
+    notes: list[tuple[str, dict]] = field(default_factory=list)
 
     @property
-    def duration_text(self) -> str:
+    def duration_text(self) -> str | None:
+        """Durée formatée (neutre en langue), ou None si inconnue."""
         if self.duration_seconds is None:
-            return "Inconnue"
+            return None
         total = int(self.duration_seconds)
         h, rem = divmod(total, 3600)
         m, s = divmod(rem, 60)
@@ -201,22 +204,14 @@ def parse_log(raw: str) -> RunReport:
     if start is not None and last_ts is not None and last_ts > start:
         report.duration_seconds = last_ts - start
         if mission_start_ts is None:
-            report.notes.append(
-                "Durée estimée sur l'ensemble du log (début de mission non détecté)."
-            )
+            report.notes.append(("an.note_est_duration", {}))
 
     if not report.is_arbitration:
-        report.notes.append(
-            "Aucun marqueur d'arbitration détecté — ce log ne semble pas provenir "
-            "d'une arbitration (ou le format a changé)."
-        )
+        report.notes.append(("an.note_not_arby", {}))
     if report.host_migrations:
-        report.notes.append(
-            f"⚠️ {report.host_migrations} migration(s) d'hôte détectée(s) — "
-            "certaines données peuvent être incomplètes."
-        )
+        report.notes.append(("an.note_migrations", {"n": report.host_migrations}))
     if not report.ended_properly:
-        report.notes.append("Fin de mission non détectée (log coupé ou mission en cours).")
+        report.notes.append(("an.note_no_end", {}))
 
     return report
 

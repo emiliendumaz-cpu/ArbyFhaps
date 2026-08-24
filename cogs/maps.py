@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import storage
+from utils import i18n, storage
 
 MISSION_TYPES = ["Défense", "Interception", "Survie", "Excavation", "Défense mobile", "Disruption"]
 
@@ -42,19 +42,18 @@ class Maps(commands.Cog):
 
     @group.command(name="liste", description="Liste toutes les maps configurées.")
     async def liste(self, interaction: discord.Interaction):
+        lang = i18n.get_lang(interaction.user.id, interaction.locale)
         maps = self._load()
         if not maps:
-            await interaction.response.send_message(
-                "Aucune map configurée. Ajoutez-en une avec `/map definir`.", ephemeral=True
-            )
+            await interaction.response.send_message(i18n.t("map.none", lang), ephemeral=True)
             return
 
-        embed = discord.Embed(title="🗺️ Maps d'arbitration configurées", color=discord.Color.teal())
+        embed = discord.Embed(title=i18n.t("map.list_title", lang), color=discord.Color.teal())
         for name, info in sorted(maps.items()):
             compo = ", ".join(info.get("compo", [])) or "—"
             embed.add_field(
                 name=f"{name.title()} — {info.get('type', '?')}",
-                value=f"Compo : {compo}",
+                value=i18n.t("map.compo_line", lang, compo=compo),
                 inline=False,
             )
         await interaction.response.send_message(embed=embed)
@@ -63,11 +62,12 @@ class Maps(commands.Cog):
     @app_commands.describe(nom="Nom de la map")
     @app_commands.autocomplete(nom=_autocomplete_map)
     async def info(self, interaction: discord.Interaction, nom: str):
+        lang = i18n.get_lang(interaction.user.id, interaction.locale)
         maps = self._load()
         info = maps.get(nom.lower())
         if info is None:
             await interaction.response.send_message(
-                f"❌ Map `{nom}` inconnue. Voir `/map liste`.", ephemeral=True
+                i18n.t("map.unknown", lang, nom=nom), ephemeral=True
             )
             return
 
@@ -76,10 +76,10 @@ class Maps(commands.Cog):
             color=discord.Color.teal(),
             description=info.get("notes") or None,
         )
-        embed.add_field(name="Type", value=info.get("type", "?"), inline=True)
+        embed.add_field(name=i18n.t("map.f_type", lang), value=info.get("type", "?"), inline=True)
         compo = info.get("compo", [])
         embed.add_field(
-            name="Compo recommandée",
+            name=i18n.t("map.f_compo", lang),
             value="\n".join(f"{i + 1}. {frame}" for i, frame in enumerate(compo)) or "—",
             inline=True,
         )
@@ -104,16 +104,13 @@ class Maps(commands.Cog):
         compo: str,
         notes: str | None = None,
     ):
+        lang = i18n.get_lang(interaction.user.id, interaction.locale)
         frames = [f.strip() for f in compo.split(",") if f.strip()]
         if not frames:
-            await interaction.response.send_message(
-                "❌ La compo est vide. Exemple : `Vauban, Wisp, Octavia, Khora`.", ephemeral=True
-            )
+            await interaction.response.send_message(i18n.t("map.empty_compo", lang), ephemeral=True)
             return
         if len(frames) > 4:
-            await interaction.response.send_message(
-                "❌ Une escouade compte 4 joueurs maximum.", ephemeral=True
-            )
+            await interaction.response.send_message(i18n.t("map.too_many", lang), ephemeral=True)
             return
 
         maps = self._load()
@@ -124,8 +121,10 @@ class Maps(commands.Cog):
         }
         self._save(maps)
         await interaction.response.send_message(
-            f"✅ Map **{nom.title()}** ({type_mission.value}) enregistrée avec la compo : "
-            f"{', '.join(frames)}."
+            i18n.t(
+                "map.saved", lang,
+                nom=nom.title(), type=type_mission.value, compo=", ".join(frames),
+            )
         )
 
     @group.command(name="supprimer", description="Supprime une map configurée (admin).")
@@ -133,12 +132,15 @@ class Maps(commands.Cog):
     @app_commands.autocomplete(nom=_autocomplete_map)
     @app_commands.default_permissions(manage_guild=True)
     async def supprimer(self, interaction: discord.Interaction, nom: str):
+        lang = i18n.get_lang(interaction.user.id, interaction.locale)
         maps = self._load()
         if maps.pop(nom.lower(), None) is None:
-            await interaction.response.send_message(f"❌ Map `{nom}` inconnue.", ephemeral=True)
+            await interaction.response.send_message(
+                i18n.t("map.unknown_simple", lang, nom=nom), ephemeral=True
+            )
             return
         self._save(maps)
-        await interaction.response.send_message(f"🗑️ Map **{nom.title()}** supprimée.")
+        await interaction.response.send_message(i18n.t("map.deleted", lang, nom=nom.title()))
 
 
 async def setup(bot: commands.Bot):

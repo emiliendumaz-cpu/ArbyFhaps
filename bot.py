@@ -26,7 +26,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("arbyfhaps")
 
-COGS = ["cogs.analyse", "cogs.maps", "cogs.builds"]
+COGS = ["cogs.analyse", "cogs.maps", "cogs.builds", "cogs.langue"]
 
 # Le bot n'a besoin d'aucun intent privilégié : pas de lecture des messages,
 # pas de liste de membres. Les slash commands suffisent.

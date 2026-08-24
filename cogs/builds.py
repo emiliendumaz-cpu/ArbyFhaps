@@ -12,7 +12,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import storage
+from utils import i18n, storage
 
 
 def _load_builds() -> dict:
@@ -23,9 +23,9 @@ def _save_builds(data: dict) -> None:
     storage.save("builds", data)
 
 
-def _category_embed(category: str, entries: list[dict]) -> discord.Embed:
+def _category_embed(category: str, entries: list[dict], lang: str) -> discord.Embed:
     embed = discord.Embed(
-        title=f"📘 Builds Arbitration — {category}",
+        title=i18n.t("b.cat_title", lang, cat=category),
         color=discord.Color.gold(),
     )
     total = len(embed.title)
@@ -34,50 +34,49 @@ def _category_embed(category: str, entries: list[dict]) -> discord.Embed:
         if entry.get("description"):
             lines.append(entry["description"])
         if entry.get("mods") and entry["mods"] != "—":
-            lines.append(f"**Mods :** {entry['mods']}")
+            lines.append(i18n.t("b.mods_label", lang, mods=entry["mods"]))
         if entry.get("conseils"):
             lines.append(f"💡 {entry['conseils']}")
         name = entry.get("nom", "Build")
         value = "\n".join(lines)[:1024]
         # Limite Discord : 6000 caractères par embed. On s'arrête avant.
         if total + len(name) + len(value) > 5800:
-            embed.set_footer(text=f"… et {len(entries) - i} autre(s) build(s) — catégorie trop pleine pour tout afficher.")
+            embed.set_footer(text=i18n.t("b.overflow", lang, n=len(entries) - i))
             break
         embed.add_field(name=name, value=value, inline=False)
         total += len(name) + len(value)
     if not entries:
-        embed.description = "Aucun build dans cette catégorie."
+        embed.description = i18n.t("b.cat_empty", lang)
     return embed
 
 
 class CategorySelect(discord.ui.Select):
-    def __init__(self, builds: dict, current: str):
+    def __init__(self, builds: dict, current: str, lang: str):
         options = [
             discord.SelectOption(label=cat, default=(cat == current))
             for cat in list(builds)[:25]
         ]
-        super().__init__(placeholder="Choisir une catégorie…", options=options)
+        super().__init__(placeholder=i18n.t("b.placeholder", lang), options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        # On relit le fichier à chaque interaction : les modifications faites
-        # via /build definir sont visibles immédiatement.
+        # Chaque joueur qui clique voit les messages d'erreur dans SA langue ;
+        # l'embed partagé garde la langue de celui qui a lancé /builds.
+        lang = i18n.get_lang(interaction.user.id, interaction.locale)
         builds = _load_builds()
         category = self.values[0]
         if category not in builds:
-            await interaction.response.send_message(
-                "❌ Cette catégorie n'existe plus.", ephemeral=True
-            )
+            await interaction.response.send_message(i18n.t("b.cat_gone", lang), ephemeral=True)
             return
         await interaction.response.edit_message(
-            embed=_category_embed(category, builds[category]),
-            view=BuildsView(builds, category),
+            embed=_category_embed(category, builds[category], lang),
+            view=BuildsView(builds, category, lang),
         )
 
 
 class BuildsView(discord.ui.View):
-    def __init__(self, builds: dict, current: str):
+    def __init__(self, builds: dict, current: str, lang: str):
         super().__init__(timeout=600)
-        self.add_item(CategorySelect(builds, current))
+        self.add_item(CategorySelect(builds, current, lang))
 
 
 # ---------------------------------------------------------------------------
@@ -126,21 +125,19 @@ class Builds(commands.Cog):
 
     @app_commands.command(
         name="builds",
-        description="Guide des builds spécial arbitration (Warframes, armes, compagnons…).",
+        description="Guide des builds arbitration / Arbitration builds guide.",
     )
     async def builds(self, interaction: discord.Interaction):
+        lang = i18n.get_lang(interaction.user.id, interaction.locale)
         builds = _load_builds()
         if not builds:
-            await interaction.response.send_message(
-                "❌ Aucun build configuré. Ajoutez-en avec `/build definir`.",
-                ephemeral=True,
-            )
+            await interaction.response.send_message(i18n.t("b.none", lang), ephemeral=True)
             return
 
         first_category = next(iter(builds))
         await interaction.response.send_message(
-            embed=_category_embed(first_category, builds[first_category]),
-            view=BuildsView(builds, first_category),
+            embed=_category_embed(first_category, builds[first_category], lang),
+            view=BuildsView(builds, first_category, lang),
         )
 
     # --------------------------------------------------------------- gestion
@@ -163,13 +160,12 @@ class Builds(commands.Cog):
         mods: str,
         conseils: str | None = None,
     ):
+        lang = i18n.get_lang(interaction.user.id, interaction.locale)
         builds = _load_builds()
         categorie = categorie.strip()
         nom = nom.strip()
         if not categorie or not nom:
-            await interaction.response.send_message(
-                "❌ Catégorie et nom ne peuvent pas être vides.", ephemeral=True
-            )
+            await interaction.response.send_message(i18n.t("b.empty_fields", lang), ephemeral=True)
             return
 
         entries = builds.setdefault(categorie, [])
@@ -182,40 +178,37 @@ class Builds(commands.Cog):
         for i, existing in enumerate(entries):
             if existing.get("nom", "").lower() == nom.lower():
                 entries[i] = entry
-                action = "modifié"
+                message = i18n.t("b.saved_mod", lang, nom=nom, cat=categorie)
                 break
         else:
             if len(entries) >= 25:
-                await interaction.response.send_message(
-                    "❌ Cette catégorie contient déjà 25 builds (limite d'affichage Discord).",
-                    ephemeral=True,
-                )
+                await interaction.response.send_message(i18n.t("b.full", lang), ephemeral=True)
                 return
             entries.append(entry)
-            action = "ajouté"
+            message = i18n.t("b.saved_add", lang, nom=nom, cat=categorie)
 
         _save_builds(builds)
         await interaction.response.send_message(
-            f"✅ Build **{nom}** {action} dans la catégorie **{categorie}**.",
-            embed=_category_embed(categorie, entries),
+            message, embed=_category_embed(categorie, entries, lang)
         )
 
     @group.command(name="supprimer", description="Supprime un build du guide.")
     @app_commands.describe(categorie="Catégorie du build", nom="Nom du build à supprimer")
     @app_commands.autocomplete(categorie=_autocomplete_categorie, nom=_autocomplete_build)
     async def supprimer(self, interaction: discord.Interaction, categorie: str, nom: str):
+        lang = i18n.get_lang(interaction.user.id, interaction.locale)
         builds = _load_builds()
         entries = builds.get(categorie)
         if entries is None:
             await interaction.response.send_message(
-                f"❌ Catégorie `{categorie}` inconnue.", ephemeral=True
+                i18n.t("b.unknown_cat", lang, cat=categorie), ephemeral=True
             )
             return
 
         remaining = [e for e in entries if e.get("nom", "").lower() != nom.strip().lower()]
         if len(remaining) == len(entries):
             await interaction.response.send_message(
-                f"❌ Build `{nom}` introuvable dans **{categorie}**.", ephemeral=True
+                i18n.t("b.not_found", lang, nom=nom, cat=categorie), ephemeral=True
             )
             return
 
@@ -225,17 +218,19 @@ class Builds(commands.Cog):
             # Une catégorie vide disparaît du menu de /builds.
             del builds[categorie]
         _save_builds(builds)
-        await interaction.response.send_message(
-            f"🗑️ Build **{nom}** supprimé de **{categorie}**."
-        )
+        await interaction.response.send_message(i18n.t("b.deleted", lang, nom=nom, cat=categorie))
 
     @group.command(name="categories", description="Liste les catégories et le nombre de builds.")
     async def categories(self, interaction: discord.Interaction):
+        lang = i18n.get_lang(interaction.user.id, interaction.locale)
         builds = _load_builds()
         if not builds:
-            await interaction.response.send_message("Aucun build configuré.", ephemeral=True)
+            await interaction.response.send_message(i18n.t("b.cats_none", lang), ephemeral=True)
             return
-        lines = [f"• **{cat}** — {len(entries)} build(s)" for cat, entries in builds.items()]
+        lines = [
+            i18n.t("b.cat_line", lang, cat=cat, n=len(entries))
+            for cat, entries in builds.items()
+        ]
         await interaction.response.send_message("\n".join(lines), ephemeral=True)
 
 

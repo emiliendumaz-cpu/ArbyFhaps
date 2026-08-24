@@ -16,6 +16,7 @@ compos recommandées par map, et guide des builds.
 | `/map info <nom>` | Affiche la compo recommandée pour une map. |
 | `/map definir` | (Admin) Ajoute/modifie une map, son type et sa compo. |
 | `/map supprimer` | (Admin) Supprime une map. |
+| `/langue` | Choisis ta langue (Français / English / Auto). Chaque joueur a la sienne ; en mode Auto, le bot suit la langue du client Discord. |
 
 ## 🔒 Confidentialité
 
@@ -77,12 +78,24 @@ donne un log propre et léger.
 bot.py              # point d'entrée
 cogs/analyse.py     # /analyse — analyse EE.log anonymisée
 cogs/maps.py        # /map — maps & compos
-cogs/builds.py      # /builds — guide des builds
+cogs/builds.py      # /builds — guide des builds + /build (gestion)
+cogs/langue.py      # /langue — langue par joueur
 utils/eelog.py      # anonymisation + parsing du EE.log
+utils/i18n.py       # traductions FR/EN + préférences de langue
 utils/storage.py    # lecture/écriture JSON atomique
 data/maps.json      # maps configurées (modifiable)
 data/builds.json    # builds du guide (modifiable)
+data/langues.json   # préférences de langue (créé au premier /langue, non versionné)
 ```
+
+## 🌍 Langues
+
+L'interface du bot (réponses, embeds, erreurs) existe en **français** et en
+**anglais**. Chaque joueur choisit avec `/langue` ; sans choix, le bot suit la
+langue du client Discord du joueur (français par défaut pour les autres
+langues). Le contenu éditable (descriptions des builds, notes des maps) reste
+dans la langue où vous l'écrivez. Pour ajouter une langue : compléter chaque
+entrée de `utils/i18n.py` et la liste `LANGS`.
 
 ## ⚠️ Limites connues
 

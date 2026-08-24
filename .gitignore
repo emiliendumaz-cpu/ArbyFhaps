@@ -8,8 +8,9 @@ __pycache__/
 venv/
 
 # Données locales modifiées à chaud par le bot (on garde les fichiers d'exemple versionnés,
-# mais pas les sauvegardes temporaires)
+# mais pas les sauvegardes temporaires ni les préférences des joueurs)
 data/*.bak
+data/langues.json
 
 # Logs uploadés — ne doivent JAMAIS être conservés
 *.log
