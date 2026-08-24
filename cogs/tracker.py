@@ -204,6 +204,8 @@ class TrackerCog(commands.Cog):
         )
         for name, url, verdict in results:
             embed.add_field(name=name, value=f"`{url}`\n```{verdict[:900]}```", inline=False)
+        summary = await worldstate.inspect_schedule(self.session)
+        embed.add_field(name="🧠 Planning interprété par le bot", value=f"```{summary[:1000]}```", inline=False)
         await interaction.followup.send(embed=embed, ephemeral=True)
 
     @app_commands.command(name="tier-set", description="(Admin) Fixe la note (F à S) d'un nœud pour ce serveur.")

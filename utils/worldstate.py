@@ -24,6 +24,8 @@ SCHEDULE_URLS = [
 ]
 DIAGNOSTIC_URLS = [("warframestat.us", CURRENT_URL)] + SCHEDULE_URLS
 TIMEOUT = aiohttp.ClientTimeout(total=15)
+# Le planning semlar pèse plusieurs Mo : timeout dédié plus large
+SCHEDULE_TIMEOUT = aiohttp.ClientTimeout(total=60)
 
 log = logging.getLogger(__name__)
 
@@ -133,8 +135,8 @@ def _is_valid(arby: Arbitration) -> bool:
     return True
 
 
-async def _get_json(session: aiohttp.ClientSession, url: str):
-    async with session.get(url, timeout=TIMEOUT) as resp:
+async def _get_json(session: aiohttp.ClientSession, url: str, timeout: aiohttp.ClientTimeout = TIMEOUT):
+    async with session.get(url, timeout=timeout) as resp:
         resp.raise_for_status()
         return await resp.json(content_type=None)
 
@@ -230,7 +232,9 @@ async def _get_schedule_data(session: aiohttp.ClientSession):
     data = None
     for name, url in SCHEDULE_URLS:
         try:
-            data = await _get_json(session, url)
+            data = await _get_json(session, url, timeout=SCHEDULE_TIMEOUT)
+            size = len(data) if isinstance(data, list) else "?"
+            log.info("Planning %s récupéré (%s entrées)", name, size)
             break
         except Exception as exc:
             log.warning("Planning %s indisponible : %s", name, exc)
@@ -245,16 +249,8 @@ async def fetch_schedule(session: aiohttp.ClientSession, limit: int = 6) -> tupl
     Essaie chaque source de SCHEDULE_URLS ; renvoie (None, []) si tout est KO.
     """
     data = await _get_schedule_data(session)
+    data = _as_entry_list(data)
     if data is None:
-        return None, []
-
-    if isinstance(data, dict):
-        for key in ("upcoming", "arbitrations", "data", "predictions"):
-            if isinstance(data.get(key), list):
-                data = data[key]
-                break
-    if not isinstance(data, list):
-        log.warning("Format de planning inattendu (%s)", type(data).__name__)
         return None, []
 
     now = datetime.now(timezone.utc)
@@ -278,6 +274,47 @@ async def fetch_schedule(session: aiohttp.ClientSession, limit: int = 6) -> tupl
                 break
     upcoming.sort(key=lambda a: a.activation or now)
     return current, upcoming
+
+
+def _as_entry_list(data) -> list | None:
+    """Déballe le planning : liste directe, ou liste sous une clé connue."""
+    if isinstance(data, dict):
+        for key in ("upcoming", "arbitrations", "data", "predictions"):
+            if isinstance(data.get(key), list):
+                return data[key]
+    if isinstance(data, list):
+        return data
+    if data is not None:
+        log.warning("Format de planning inattendu (%s)", type(data).__name__)
+    return None
+
+
+async def inspect_schedule(session: aiohttp.ClientSession) -> str:
+    """Résumé lisible de ce que le bot comprend du planning (pour /sources)."""
+    raw = await _get_schedule_data(session)
+    entries = _as_entry_list(raw)
+    if entries is None:
+        return "Aucun planning exploitable (sources KO ou format inconnu)."
+
+    parsed = [a for a in (_schedule_entry(i) for i in entries if isinstance(i, dict)) if a]
+    if not parsed:
+        return f"{len(entries)} entrées reçues mais aucune n'a pu être interprétée."
+
+    now = datetime.now(timezone.utc)
+    first_start = parsed[0].activation
+    last_end = max((a.expiry or a.activation or now for a in parsed), default=None)
+    current, upcoming = await fetch_schedule(session)
+
+    lines = [
+        f"{len(parsed)}/{len(entries)} entrées interprétées",
+        f"Première : {first_start:%Y-%m-%d %H:%M} UTC" if first_start else "Première : ?",
+        f"Dernière : {last_end:%Y-%m-%d %H:%M} UTC" if last_end else "Dernière : ?",
+        f"En cours trouvée : {current.node if current else 'NON'}",
+        f"Prochaines trouvées : {len(upcoming)}",
+    ]
+    if last_end and last_end < now:
+        lines.append("⚠️ PLANNING PÉRIMÉ : la dernière entrée est dans le passé — la source n'est plus mise à jour.")
+    return "\n".join(lines)
 
 
 async def probe_sources(session: aiohttp.ClientSession) -> list[tuple[str, str, str]]:
