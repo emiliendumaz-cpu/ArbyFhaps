@@ -1,57 +1,64 @@
 [
   {
-    "name": "Saryn — Nuke Défense/Survie",
-    "frame": "Saryn",
+    "name": "Cyte-09 — Guide Arbitration",
+    "frame": "Cyte-09",
+    "category": "DPS / Guide",
+    "description": "Main DPS actuel de la méta Arbitration : cast le 1 puis spam le 2 avec la munition adaptée à la compo.\n• Électrique en général → config **Shock** (Helminth de Volt)\n• Électrique + économie de munitions → config **EM** (Helminth d'efficacité de munition)\n• Explosif → config **Sunder** (augment de Gauss), à jouer avec le Boar\n• Radiation → config **Smite** (Helminth d'Oberon)\n• Gaz → si compo gaz avec Citrine\nStats : ~254 % Force · 215 % Durée · 45 % Efficacité · 34 % Portée.",
+    "mods": "Socle commun : Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash",
+    "arcanes": "Arcane Battery, Arcane Sculptor",
+    "shards": "5 éclats d'Archonte jaunes tauforgés : 2× +37,5 % Vitesse d'incantation, 3× +22,5 % Vélocité de parkour",
+    "image": "cyte-09-shards.png"
+  },
+  {
+    "name": "Cyte-09 — Shock (Volt)",
+    "frame": "Cyte-09",
     "category": "DPS",
-    "description": "Spores + Miasma pour nettoyer les vagues. Priorité Force/Portée. Indispensable sur les défenses Arbitration où les ennemis montent vite en niveau.",
-    "mods": "Umbral Intensify, Stretch, Overextended, Umbral Vitality, Adaptation, Molt Augmented, Regenerative Molt, Natural Talent",
-    "arcanes": "Arcane Energize, Arcane Guardian"
+    "description": "Variante **électrique**, le choix général. Shock (Helminth de Volt) + Shock Trooper pour booster les dégâts électriques.",
+    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Shock Trooper",
+    "arcanes": "Arcane Battery, Arcane Sculptor",
+    "image": "cyte-09-shock.png"
   },
   {
-    "name": "Octavia — Immortelle AFK-proof",
-    "frame": "Octavia",
-    "category": "Survie longue",
-    "description": "Mallet + Resonator font le travail pendant que l'invisibilité de Metronome vous protège. Le choix le plus sûr pour les très longues survies Arbitration (la mort = fin de run).",
-    "mods": "Umbral Intensify, Augur Reach, Stretch, Constitution, Primed Continuity, Adaptation, Vitality, Streamline",
-    "arcanes": "Arcane Energize, Molt Augmented"
+    "name": "Cyte-09 — Sunder (Gauss)",
+    "frame": "Cyte-09",
+    "category": "DPS",
+    "description": "Variante **explosive** avec Sunder (augment de Gauss en Helminth), à jouer avec le Boar.",
+    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Natural Talent, Thermal Transfer",
+    "arcanes": "Arcane Battery, Arcane Sculptor",
+    "image": "cyte-09-sunder.png"
   },
   {
-    "name": "Wisp — Support/Buffer",
-    "frame": "Wisp",
-    "category": "Support",
-    "description": "Motes Vitalité + Vitesse pour toute l'équipe, indispensable en groupe. Le heal passif compense l'absence de Vazarin. Breach Surge scale très bien à haut niveau.",
-    "mods": "Umbral Intensify, Primed Continuity, Augur Message, Stretch, Adaptation, Umbral Vitality, Natural Talent, Streamline",
-    "arcanes": "Arcane Energize, Arcane Guardian"
+    "name": "Cyte-09 — Nourish (Grendel)",
+    "frame": "Cyte-09",
+    "category": "DPS",
+    "description": "Variante **Nourish** (Helminth de Grendel) avec Precision Intensify pour la Force sur le 2.",
+    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Precision Intensify",
+    "arcanes": "Arcane Battery, Arcane Sculptor",
+    "image": "cyte-09-nourish.png"
   },
   {
-    "name": "Khora — Récolte + CC",
-    "frame": "Khora",
-    "category": "DPS / Loot",
-    "description": "Whipclaw scale à l'infini, Strangledome regroupe et immobilise. Avec Pilfering Strangledome, double le loot de Vitus Essence sur les survies.",
-    "mods": "Pilfering Strangledome, Umbral Intensify, Blind Rage, Stretch, Primed Continuity, Adaptation, Vitality, Streamline",
-    "arcanes": "Arcane Energize, Arcane Avenger"
+    "name": "Cyte-09 — Smite (Oberon)",
+    "frame": "Cyte-09",
+    "category": "DPS",
+    "description": "Variante **radiation** avec Smite (Helminth d'Oberon) + Smite Infusion.",
+    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Smite Infusion",
+    "arcanes": "Arcane Battery, Arcane Sculptor",
+    "image": "cyte-09-smite.png"
   },
   {
-    "name": "Nekros — Desecrate Loot",
-    "frame": "Nekros",
-    "category": "Loot",
-    "description": "Despoil + Desecrate pour maximiser la Vitus Essence et l'énergie de l'équipe sur les survies Arbitration. Shield of Shadows pour la tankiness.",
-    "mods": "Despoil, Shield of Shadows, Umbral Intensify, Primed Continuity, Equilibrium, Health Conversion, Adaptation, Umbral Vitality",
-    "arcanes": "Arcane Guardian, Arcane Grace"
-  },
-  {
-    "name": "Frost — Défense d'objectif",
-    "frame": "Frost",
-    "category": "Défense",
-    "description": "Globe de glace pour protéger l'objectif sur les défenses/excavations. Biting Frost et Icy Avalanche scale bien ; l'armor strip de l'Avalanche reste utile à tout niveau.",
-    "mods": "Icy Avalanche, Umbral Intensify, Blind Rage, Stretch, Primed Continuity, Adaptation, Umbral Vitality, Streamline",
-    "arcanes": "Arcane Energize, Arcane Guardian"
+    "name": "Cyte-09 — EM (éco. munitions)",
+    "frame": "Cyte-09",
+    "category": "DPS",
+    "description": "Variante **électrique** avec l'Helminth d'efficacité de munition. Primed Continuity porte la Durée à 270 %.",
+    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Primed Continuity",
+    "arcanes": "Arcane Battery, Arcane Sculptor",
+    "image": "cyte-09-em.png"
   },
   {
     "name": "Focus & Conseils généraux Arbitration",
     "frame": "—",
     "category": "Général",
-    "description": "Pas de résurrection classique : ramassez les jetons de revive sur les drones. Les Drones d'Arbitration rendent les ennemis proches invulnérables : tuez-les en priorité (arme hitscan précise). Une seule rotation de récompense par intervalle (rotation A toutes les 10 vagues/10 min). Emmenez un frame que vous maîtrisez : la mort coûte cher.",
+    "description": "Pas de résurrection classique : ramassez les jetons de revive sur les drones. Les Drones d'Arbitration rendent les ennemis proches invulnérables : tuez-les en priorité (arme hitscan précise). Une seule rotation de récompense par intervalle. Emmenez un frame que vous maîtrisez : la mort coûte cher.",
     "mods": "Adaptation quasi obligatoire ; évitez les builds papier.",
     "arcanes": "Magus Repair (opérateur) pour compenser l'absence de heals."
   }

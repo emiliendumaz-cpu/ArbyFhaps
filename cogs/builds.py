@@ -1,6 +1,13 @@
-"""Guide des builds Arbitration : /builds + gestion des builds personnalisés."""
+"""Guide des builds Arbitration : /builds + gestion des builds personnalisés.
+
+Chaque build peut avoir une image (capture d'écran du build en jeu) stockée
+dans data/build_images/ — uploadée par un admin via /build-image.
+"""
 
 from __future__ import annotations
+
+import re
+from pathlib import Path
 
 import discord
 from discord import app_commands
@@ -8,8 +15,31 @@ from discord.ext import commands
 
 from utils import storage, theme
 
+IMAGES_DIR = Path(__file__).resolve().parent.parent / "data" / "build_images"
+IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+MAX_IMAGE_BYTES = 8 * 1024 * 1024
 
-def _build_embed(build: dict, index: int, total: int) -> discord.Embed:
+
+def _slug(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def _image_path(build: dict) -> Path | None:
+    """Image du build : champ « image » explicite, sinon <slug-du-nom>.<ext>."""
+    candidates = []
+    explicit = build.get("image")
+    if explicit:
+        candidates.append(Path(explicit).name)  # jamais de chemin, juste le nom
+    slug = _slug(build["name"])
+    candidates.extend(f"{slug}{ext}" for ext in IMAGE_EXTS)
+    for name in candidates:
+        path = IMAGES_DIR / name
+        if path.is_file():
+            return path
+    return None
+
+
+def _build_embed(build: dict, index: int, total: int) -> tuple[discord.Embed, discord.File | None]:
     embed = theme.make_embed(
         f"⚖️ {build['name']}",
         f"{build['description']}\n{theme.SEPARATOR}",
@@ -22,7 +52,15 @@ def _build_embed(build: dict, index: int, total: int) -> discord.Embed:
         embed.add_field(name="🧩 Mods", value=build["mods"], inline=False)
     if build.get("arcanes"):
         embed.add_field(name="✨ Arcanes", value=build["arcanes"], inline=False)
-    return embed
+    if build.get("shards"):
+        embed.add_field(name="💎 Éclats d'Archonte", value=build["shards"], inline=False)
+
+    file = None
+    path = _image_path(build)
+    if path:
+        file = discord.File(path, filename=path.name)
+        embed.set_image(url=f"attachment://{path.name}")
+    return embed, file
 
 
 class BuildsPaginator(discord.ui.View):
@@ -31,18 +69,23 @@ class BuildsPaginator(discord.ui.View):
         self.builds = builds
         self.index = 0
 
-    def current_embed(self) -> discord.Embed:
+    def current(self) -> tuple[discord.Embed, discord.File | None]:
         return _build_embed(self.builds[self.index], self.index, len(self.builds))
+
+    async def _flip(self, interaction: discord.Interaction, step: int):
+        self.index = (self.index + step) % len(self.builds)
+        embed, file = self.current()
+        await interaction.response.edit_message(
+            embed=embed, view=self, attachments=[file] if file else []
+        )
 
     @discord.ui.button(label="◀ Précédent", style=discord.ButtonStyle.secondary)
     async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.index = (self.index - 1) % len(self.builds)
-        await interaction.response.edit_message(embed=self.current_embed(), view=self)
+        await self._flip(interaction, -1)
 
     @discord.ui.button(label="Suivant ▶", style=discord.ButtonStyle.secondary)
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.index = (self.index + 1) % len(self.builds)
-        await interaction.response.edit_message(embed=self.current_embed(), view=self)
+        await self._flip(interaction, 1)
 
 
 class BuildsCog(commands.Cog):
@@ -67,7 +110,11 @@ class BuildsCog(commands.Cog):
             )
             return
         view = BuildsPaginator(builds)
-        await interaction.response.send_message(embed=view.current_embed(), view=view)
+        embed, file = view.current()
+        if file:
+            await interaction.response.send_message(embed=embed, view=view, file=file)
+        else:
+            await interaction.response.send_message(embed=embed, view=view)
 
     @builds.autocomplete("categorie")
     async def category_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -77,6 +124,62 @@ class BuildsCog(commands.Cog):
             app_commands.Choice(name=c, value=c)
             for c in categories
             if current_lower in c.lower()
+        ][:25]
+
+    @app_commands.command(name="build-image", description="(Admin) Attache une capture d'écran à un build (affichée dans /builds).")
+    @app_commands.describe(nom="Nom du build (autocomplétion)", fichier="Capture d'écran (png/jpg/webp, max 8 Mo)")
+    @app_commands.default_permissions(manage_guild=True)
+    async def build_image(self, interaction: discord.Interaction, nom: str, fichier: discord.Attachment):
+        build = next(
+            (b for b in self._all_builds(interaction.guild_id) if b["name"].lower() == nom.lower()),
+            None,
+        )
+        if build is None:
+            await interaction.response.send_message(
+                embed=theme.error_embed(f"Build **{nom}** introuvable."), ephemeral=True
+            )
+            return
+        ext = Path(fichier.filename).suffix.lower()
+        if ext not in IMAGE_EXTS:
+            await interaction.response.send_message(
+                embed=theme.error_embed("Format non géré : envoyez du png, jpg, webp ou gif."),
+                ephemeral=True,
+            )
+            return
+        if fichier.size > MAX_IMAGE_BYTES:
+            await interaction.response.send_message(
+                embed=theme.error_embed("Image trop lourde (max 8 Mo)."), ephemeral=True
+            )
+            return
+
+        await interaction.response.defer(thinking=True)
+        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+        # Le champ « image » explicite du build prime : on écrit sous ce nom-là
+        target_name = Path(build["image"]).name if build.get("image") else f"{_slug(build['name'])}{ext}"
+        target = IMAGES_DIR / target_name
+        # Purge les anciennes variantes du slug pour éviter les doublons d'extension
+        for old_ext in IMAGE_EXTS:
+            old = IMAGES_DIR / f"{_slug(build['name'])}{old_ext}"
+            if old != target and old.is_file():
+                old.unlink()
+        await fichier.save(target)
+
+        embed = theme.make_embed(
+            f"✅ Image enregistrée pour {build['name']}",
+            "Elle s'affichera désormais dans `/builds`.",
+            color=theme.GREEN,
+        )
+        file = discord.File(target, filename=target.name)
+        embed.set_image(url=f"attachment://{target.name}")
+        await interaction.followup.send(embed=embed, file=file)
+
+    @build_image.autocomplete("nom")
+    async def build_name_autocomplete(self, interaction: discord.Interaction, current: str):
+        current_lower = current.lower()
+        return [
+            app_commands.Choice(name=b["name"], value=b["name"])
+            for b in self._all_builds(interaction.guild_id)
+            if current_lower in b["name"].lower()
         ][:25]
 
     @app_commands.command(name="build-add", description="(Admin) Ajoute un build Arbitration personnalisé au serveur.")
@@ -114,7 +217,11 @@ class BuildsCog(commands.Cog):
         )
         storage.save_guild(interaction.guild_id, data)
         await interaction.response.send_message(
-            embed=theme.make_embed(f"✅ Build ajouté : {nom} ({frame})", color=theme.GREEN)
+            embed=theme.make_embed(
+                f"✅ Build ajouté : {nom} ({frame})",
+                "Ajoutez une capture avec `/build-image` si vous voulez.",
+                color=theme.GREEN,
+            )
         )
 
     @app_commands.command(name="build-remove", description="(Admin) Supprime un build personnalisé du serveur.")

@@ -43,8 +43,9 @@ class HelpCog(commands.Cog):
         embed.add_field(
             name="⚖️ Builds Arbitration",
             value=(
-                "`/builds [categorie]` — Guide des builds (navigation ◀ ▶)\n"
+                "`/builds [categorie]` — Guide des builds (navigation ◀ ▶, avec captures)\n"
                 "`/build-add` 🔧 — Ajouter un build personnalisé\n"
+                "`/build-image` 🔧 — Attacher une capture d'écran à un build\n"
                 "`/build-remove` 🔧 — Supprimer un build personnalisé"
             ),
             inline=False,
