@@ -75,7 +75,11 @@ async def _build_embed(build: dict, index: int, total: int, lang: str = "fr") ->
     if build.get("variant"):
         embed.add_field(name=i18n.t(lang, "b.variant"), value=build["variant"], inline=True)
     embed.add_field(name=i18n.t(lang, "b.cat"), value=category, inline=True)
-    if build.get("mods"):
+
+    # La capture d'écran remplace la liste texte des mods : elle montre aussi
+    # les rangs et les polarités. « show_mods » force l'affichage des deux.
+    path = _image_path(build)
+    if build.get("mods") and (path is None or build.get("show_mods")):
         embed.add_field(name=i18n.t(lang, "b.mods"), value=build["mods"], inline=False)
     if build.get("arcanes"):
         embed.add_field(name=i18n.t(lang, "b.arcanes"), value=build["arcanes"], inline=False)
@@ -83,7 +87,6 @@ async def _build_embed(build: dict, index: int, total: int, lang: str = "fr") ->
         embed.add_field(name=i18n.t(lang, "b.shards"), value=shards, inline=False)
 
     file = None
-    path = _image_path(build)
     if path:
         file = discord.File(path, filename=path.name)
         embed.set_image(url=f"attachment://{path.name}")

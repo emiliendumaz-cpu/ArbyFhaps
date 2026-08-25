@@ -28,7 +28,7 @@
  "b.img.badfmt": "Formatet støttes ikke: send png, jpg, webp eller gif.",
  "b.img.notfound": "Fant ikke builden **{name}**.",
  "b.img.saved": "✅ Bilde lagret for {name}",
- "b.img.saved.desc": "Det vises nå i `/builds`.",
+ "b.img.saved.desc": "Det vises i `/build` **i stedet for modlisten** (skjermbildet viser allerede rang og polariteter).",
  "b.img.toobig": "Bildet er for stort (maks 8 MB).",
  "b.mods": "🧩 Mods",
  "b.next": "Neste ▶",

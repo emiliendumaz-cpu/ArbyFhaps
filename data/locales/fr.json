@@ -28,7 +28,7 @@
  "b.img.badfmt": "Format non géré : envoyez du png, jpg, webp ou gif.",
  "b.img.notfound": "Build **{name}** introuvable.",
  "b.img.saved": "✅ Image enregistrée pour {name}",
- "b.img.saved.desc": "Elle s'affichera désormais dans `/builds`.",
+ "b.img.saved.desc": "Elle s'affichera dans `/build` **à la place de la liste des mods** (la capture montre déjà rangs et polarités).",
  "b.img.toobig": "Image trop lourde (max 8 Mo).",
  "b.mods": "🧩 Mods",
  "b.next": "Suivant ▶",

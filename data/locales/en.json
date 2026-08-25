@@ -28,7 +28,7 @@
  "b.img.badfmt": "Unsupported format: send png, jpg, webp or gif.",
  "b.img.notfound": "Build **{name}** not found.",
  "b.img.saved": "✅ Image saved for {name}",
- "b.img.saved.desc": "It will now appear in `/builds`.",
+ "b.img.saved.desc": "It will show in `/build` **instead of the mod list** (the screenshot already shows ranks and polarities).",
  "b.img.toobig": "Image too large (max 8 MB).",
  "b.mods": "🧩 Mods",
  "b.next": "Next ▶",

@@ -28,7 +28,7 @@
  "b.img.badfmt": "Muotoa ei tueta: lähetä png, jpg, webp tai gif.",
  "b.img.notfound": "Buildia **{name}** ei löytynyt.",
  "b.img.saved": "✅ Kuva tallennettu buildille {name}",
- "b.img.saved.desc": "Se näkyy nyt komennossa `/builds`.",
+ "b.img.saved.desc": "Se näkyy komennossa `/build` **modilistan sijaan** (kuvakaappaus näyttää jo tasot ja polariteetit).",
  "b.img.toobig": "Kuva on liian suuri (enintään 8 Mt).",
  "b.mods": "🧩 Modit",
  "b.next": "Seuraava ▶",

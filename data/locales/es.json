@@ -28,7 +28,7 @@
  "b.img.badfmt": "Formato no admitido: envía png, jpg, webp o gif.",
  "b.img.notfound": "No se encontró la build **{name}**.",
  "b.img.saved": "✅ Imagen guardada para {name}",
- "b.img.saved.desc": "Ahora aparecerá en `/builds`.",
+ "b.img.saved.desc": "Aparecerá en `/build` **en lugar de la lista de mods** (la captura ya muestra rangos y polaridades).",
  "b.img.toobig": "Imagen demasiado pesada (máx. 8 MB).",
  "b.mods": "🧩 Mods",
  "b.next": "Siguiente ▶",

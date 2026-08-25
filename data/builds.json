@@ -8,7 +8,8 @@
     "mods": "Socle commun : Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash",
     "arcanes": "Arcane Battery, Arcane Sculptor",
     "shards": "5 éclats d'Archonte jaunes tauforgés : 2× +37,5 % Vitesse d'incantation, 3× +22,5 % Vélocité de parkour",
-    "image": "cyte-09-shards.png"
+    "image": "cyte-09-shards.png",
+    "show_mods": true
   },
   {
     "name": "Cyte-09 — Shock (Volt)",

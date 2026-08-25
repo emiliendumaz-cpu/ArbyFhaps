@@ -28,7 +28,7 @@
  "b.img.badfmt": "Định dạng không được hỗ trợ: hãy gửi png, jpg, webp hoặc gif.",
  "b.img.notfound": "Không tìm thấy build **{name}**.",
  "b.img.saved": "✅ Đã lưu ảnh cho {name}",
- "b.img.saved.desc": "Ảnh sẽ hiển thị trong `/builds` từ giờ.",
+ "b.img.saved.desc": "Ảnh sẽ hiện trong `/build` **thay cho danh sách mod** (ảnh đã cho thấy cấp và polarity).",
  "b.img.toobig": "Ảnh quá nặng (tối đa 8 MB).",
  "b.mods": "🧩 Mod",
  "b.next": "Tiếp ▶",
