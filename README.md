@@ -47,6 +47,13 @@ Chaque arbitration est **notée de F à S**. Priorité : note fixée par le serv
 
 Source : le bot consomme les mêmes fichiers publics que la page [browse.wf/arbys](https://browse.wf/arbys) — le planning pré-généré `arbys.txt` (heure par heure, en cours **et** à venir), `ExportRegions.json` pour les nœuds, le dictionnaire FR pour les noms, et `arbyTiers.js` pour les notes officielles (merci aux Arbitration Goons), avec une copie locale de secours dans `data/arby_tiers.json`.
 
+### 🌍 `/language` — Langue du bot, par personne
+Chacun choisit sa langue avec `/language` ; le réglage ne concerne que lui. **8 langues disponibles** : français, anglais, espagnol, italien, suédois, finnois, norvégien et vietnamien.
+
+Ce qui est localisé : tous les textes du bot (aide, libellés, boutons, erreurs), les modes de mission et factions du tracker, et les noms de nœuds/planètes via le dictionnaire officiel du jeu (français, espagnol et italien ; anglais pour les autres langues, Warframe ne les proposant pas). Les textes rédigés par les admins (builds, maps) sont traduits automatiquement — seuls les noms de mods, arcanes et warframes restent en l'état.
+
+**Ajouter une langue** : déposez un fichier `data/locales/<code>.json` (copie de `fr.json` traduite) et inscrivez le code dans `LANGS` (`utils/i18n.py`). Une clé absente retombe sur l'anglais puis le français, donc une traduction partielle reste utilisable.
+
 ### 📖 `/help`
 Affiche la liste de toutes les commandes du bot (réponse visible par vous seul).
 
@@ -77,7 +84,15 @@ bot.py               # Point d'entrée, chargement des cogs, sync des commandes
 cogs/analyze.py      # /analyse — analyse EE.log
 cogs/maps.py         # /map-add /map-remove /maps /map
 cogs/builds.py       # /builds /build-add /build-remove
+cogs/tracker.py      # /arbitration /tracker-start /tracker-stop /tier-set /sources
+cogs/language.py     # /language
 utils/eelog.py       # Parseur EE.log + anonymisation (IP, IDs, MAC, chemins…)
+utils/dashboard.py   # Rendu du dashboard PNG de /analyse
+utils/worldstate.py  # Planning des arbitrations (browse.wf) + notation F→S
+utils/i18n.py        # Chargement des locales + langue par utilisateur
+utils/translate.py   # Traduction auto des textes d'admins (Google → MyMemory)
 utils/storage.py     # Stockage JSON par serveur (data/guilds/, non versionné)
 data/builds.json     # Builds Arbitration par défaut
+data/locales/*.json  # Traductions de l'interface (une langue par fichier)
+data/arby_tiers.json # Copie de secours des notes officielles browse.wf
 ```

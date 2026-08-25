@@ -5,7 +5,7 @@ consomme les mêmes :
  - https://browse.wf/arbys.txt : planning complet, une ligne « epoch,SolNodeXXX »
    par heure (source déterministe pré-générée)
  - ExportRegions.json : méta de chaque nœud (mode MT_*, faction FC_*, clés de nom)
- - dict.<langue>.json : traduction des clés de nom (fr, en selon l'utilisateur)
+ - dict.<langue>.json : traduction des clés de nom (fr/es/it, sinon en)
  - supplemental-data/arbyTiers.js : notes officielles S→F par nœud (défaut F)
 
 La note affichée suit la priorité : override serveur (/tier-set) > note
@@ -24,11 +24,16 @@ import aiohttp
 BASE = "https://browse.wf"
 ARBYS_TXT_URL = f"{BASE}/arbys.txt"
 REGIONS_URL = f"{BASE}/warframe-public-export-plus/ExportRegions.json"
-def _dict_url(lang: str) -> str:
-    # Warframe n'existe pas en norvégien : les utilisateurs "no" reçoivent l'anglais
-    code = "fr" if lang == "fr" else "en"
-    return f"{BASE}/warframe-public-export-plus/dict.{code}.json"
 TIERS_URL = f"{BASE}/supplemental-data/arbyTiers.js"
+
+# Langues pour lesquelles Warframe fournit une traduction officielle ; les autres
+# (no, sv, fi, vi) reçoivent l'anglais, la langue de jeu de ces joueurs
+_GAME_LOCALES = {"fr", "es", "it"}
+
+
+def _dict_url(lang: str) -> str:
+    code = lang if lang in _GAME_LOCALES else "en"
+    return f"{BASE}/warframe-public-export-plus/dict.{code}.json"
 
 DIAGNOSTIC_URLS = [
     ("planning (arbys.txt)", ARBYS_TXT_URL),
@@ -45,28 +50,32 @@ log = logging.getLogger(__name__)
 TIER_ORDER = ["S", "A", "B", "C", "D", "F"]
 TIER_EMOJI = {"S": "🟡", "A": "🟢", "B": "🔵", "C": "⚪", "D": "🟠", "F": "🔴"}
 
-# Modes de mission (clés MT_* d'ExportRegions) → nom par langue
-# (pas de VF officielle en norvégien : les joueurs "no" utilisent les noms anglais)
+# Modes de mission (clés MT_* d'ExportRegions) → nom par langue ; les langues
+# sans version officielle du jeu retombent sur l'anglais via _named()
 TYPE_NAMES = {
-    "MT_SURVIVAL": {"fr": "Survie", "en": "Survival"},
-    "MT_DEFENSE": {"fr": "Défense", "en": "Defense"},
-    "MT_TERRITORY": {"fr": "Interception", "en": "Interception"},
-    "MT_EXCAVATE": {"fr": "Excavation", "en": "Excavation"},
-    "MT_PURIFY": {"fr": "Sauvetage Infesté", "en": "Infested Salvage"},
-    "MT_EVACUATION": {"fr": "Défection", "en": "Defection"},
-    "MT_ARTIFACT": {"fr": "Perturbation", "en": "Disruption"},
-    "MT_CORRUPTION": {"fr": "Déluge du Vide", "en": "Void Flood"},
-    "MT_VOID_CASCADE": {"fr": "Cascade du Vide", "en": "Void Cascade"},
-    "MT_ARMAGEDDON": {"fr": "Armageddon du Vide", "en": "Void Armageddon"},
-    "MT_ALCHEMY": {"fr": "Alchimie", "en": "Alchemy"},
+    "MT_SURVIVAL": {"fr": "Survie", "en": "Survival", "es": "Supervivencia", "it": "Sopravvivenza"},
+    "MT_DEFENSE": {"fr": "Défense", "en": "Defense", "es": "Defensa", "it": "Difesa"},
+    "MT_TERRITORY": {"fr": "Interception", "en": "Interception", "es": "Intercepción", "it": "Intercettazione"},
+    "MT_EXCAVATE": {"fr": "Excavation", "en": "Excavation", "es": "Excavación", "it": "Scavo"},
+    "MT_PURIFY": {"fr": "Sauvetage Infesté", "en": "Infested Salvage",
+                  "es": "Salvamento Infestado", "it": "Recupero Infestato"},
+    "MT_EVACUATION": {"fr": "Défection", "en": "Defection", "es": "Deserción", "it": "Defezione"},
+    "MT_ARTIFACT": {"fr": "Perturbation", "en": "Disruption", "es": "Disrupción", "it": "Disgregazione"},
+    "MT_CORRUPTION": {"fr": "Déluge du Vide", "en": "Void Flood",
+                      "es": "Inundación del Vacío", "it": "Inondazione del Vuoto"},
+    "MT_VOID_CASCADE": {"fr": "Cascade du Vide", "en": "Void Cascade",
+                        "es": "Cascada del Vacío", "it": "Cascata del Vuoto"},
+    "MT_ARMAGEDDON": {"fr": "Armageddon du Vide", "en": "Void Armageddon",
+                      "es": "Armagedón del Vacío", "it": "Armageddon del Vuoto"},
+    "MT_ALCHEMY": {"fr": "Alchimie", "en": "Alchemy", "es": "Alquimia", "it": "Alchimia"},
 }
 
 FACTION_NAMES = {
-    "FC_GRINEER": {"fr": "Grineer", "en": "Grineer"},
-    "FC_CORPUS": {"fr": "Corpus", "en": "Corpus"},
-    "FC_INFESTATION": {"fr": "Infestés", "en": "Infested"},
-    "FC_OROKIN": {"fr": "Corrompus", "en": "Corrupted"},
-    "FC_MITW": {"fr": "Le Murmure", "en": "The Murmur"},
+    "FC_GRINEER": {"fr": "Grineer", "en": "Grineer", "es": "Grineer", "it": "Grineer"},
+    "FC_CORPUS": {"fr": "Corpus", "en": "Corpus", "es": "Corpus", "it": "Corpus"},
+    "FC_INFESTATION": {"fr": "Infestés", "en": "Infested", "es": "Infestados", "it": "Infestati"},
+    "FC_OROKIN": {"fr": "Corrompus", "en": "Corrupted", "es": "Corruptos", "it": "Corrotti"},
+    "FC_MITW": {"fr": "Le Murmure", "en": "The Murmur", "es": "El Murmullo", "it": "Il Mormorio"},
 }
 
 
@@ -98,7 +107,7 @@ _TIER_PAIR_RE = re.compile(r"[\"']?((?:Sol|Clan)Node\d+)[\"']?\s*:\s*[\"']([SABC
 class Arbitration:
     solnode: str             # ex : SolNode211
     node: str                # nom affichable, ex : Casta (Cérès)
-    mission_type: str        # nom FR affichable
+    mission_type: str        # nom affichable, localisé
     type_key: str            # clé MT_* (pour le repli de notation)
     enemy: str
     activation: datetime | None = None
