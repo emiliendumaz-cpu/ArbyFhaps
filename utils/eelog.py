@@ -64,7 +64,13 @@ class RunReport:
     total_spawns: int = 0
     drones_spawned: int = 0
     drones_killed: int = 0
+    # Comptes bruts : « strict » = drones d'Arbitration identifiés comme tels,
+    # « large » = toute entité nommée drone (inclut les drones de tileset Corpus)
+    drones_killed_strict: int = 0
+    drones_killed_loose: int = 0
+    drone_source: str = ""   # "arbitration" | "large" | "saisi"
     vitus_pickups: int = 0
+    vitus_source: str = ""   # "log" | "saisi"
     waves: int = 0
     saturation: dict[str, float] = field(default_factory=dict)  # bucket -> % du temps
     interval_drones: list[int] = field(default_factory=list)
@@ -114,6 +120,10 @@ _PLAYER_NAME_RE = re.compile(r"ThemedSquadOverlay\.lua:\s*(\S+?)\s+(?:has joined
 # Événements d'agents (spawn/mort des ennemis) — plusieurs variantes selon les versions du jeu
 _AGENT_CREATED_RE = re.compile(r"(?:OnAgentCreated|AgentCreated|CreateAgent)\s+(/\S+)", re.IGNORECASE)
 _AGENT_DESTROYED_RE = re.compile(r"(?:OnAgentDestroyed|AgentDestroyed|DestroyAgent)\s+(/\S+)", re.IGNORECASE)
+# Drones d'Arbitration (ceux qui droppent la Vitus) : leur chemin d'agent contient
+# « arbitration »/« elitealert ». Les tilesets Corpus ont leurs propres drones qui
+# ne droppent rien — d'où un compte strict, et un compte large en repli seulement.
+_ARBY_DRONE_RE = re.compile(r"(?=.*drone)(?=.*(?:arbitration|elitealert))", re.IGNORECASE)
 _DRONE_RE = re.compile(r"drone", re.IGNORECASE)
 _VITUS_RE = re.compile(r"VitusEssence", re.IGNORECASE)
 _WAVE_RE = re.compile(r"\bwave\s+(\d+)\b", re.IGNORECASE)
@@ -127,8 +137,8 @@ def parse(raw_text: str) -> RunReport:
     first_ts: float | None = None
     last_ts: float | None = None
     players: list[str] = []
-    # Événements (timestamp, delta_vivants, est_un_drone, est_une_mort)
-    agent_events: list[tuple[float, int, bool]] = []
+    # Événements (timestamp, delta_vivants, est_un_drone, est_un_drone_d_arbitration)
+    agent_events: list[tuple[float, int, bool, bool]] = []
     current_ts: float | None = None
 
     for line in text.splitlines():
@@ -152,6 +162,7 @@ def parse(raw_text: str) -> RunReport:
         if cm or dm:
             path = (cm or dm).group(1)
             is_drone = bool(_DRONE_RE.search(path))
+            is_arby_drone = is_drone and bool(_ARBY_DRONE_RE.search(path))
             if cm:
                 if is_drone:
                     report.drones_spawned += 1
@@ -159,9 +170,11 @@ def parse(raw_text: str) -> RunReport:
                     report.total_spawns += 1
             else:
                 if is_drone:
-                    report.drones_killed += 1
+                    report.drones_killed_loose += 1
+                if is_arby_drone:
+                    report.drones_killed_strict += 1
             if current_ts is not None:
-                agent_events.append((current_ts, 1 if cm else -1, is_drone))
+                agent_events.append((current_ts, 1 if cm else -1, is_drone, is_arby_drone))
 
         if _VITUS_RE.search(line):
             report.vitus_pickups += 1
@@ -198,7 +211,33 @@ def parse(raw_text: str) -> RunReport:
         report.duration_s = last_ts - first_ts
 
     report.players = players[:8]
+    # Les drones d'Arbitration identifiés comme tels priment ; sinon repli sur le
+    # compte large, forcément moins sûr (drones de tileset inclus)
+    if report.drones_killed_strict:
+        report.drones_killed = report.drones_killed_strict
+        report.drone_source = "arbitration"
+    elif report.drones_killed_loose:
+        report.drones_killed = report.drones_killed_loose
+        report.drone_source = "large"
+    if report.vitus_pickups:
+        report.vitus_source = "log"
     _compute_spawn_stats(report, agent_events)
+    return report
+
+
+def apply_overrides(report: RunReport, vitus: int | None = None,
+                    drones: int | None = None) -> RunReport:
+    """Remplace les valeurs déduites du log par celles saisies par le joueur.
+
+    Le EE.log ne journalise pas les ramassages de façon fiable : une valeur
+    saisie fait autorité et rend l'analyse exacte.
+    """
+    if vitus is not None:
+        report.vitus_pickups = vitus
+        report.vitus_source = "saisi"
+    if drones is not None:
+        report.drones_killed = drones
+        report.drone_source = "saisi"
     return report
 
 
@@ -206,7 +245,7 @@ def _bucket_index(alive: int) -> int:
     return min(alive // 3, len(SATURATION_BUCKETS) - 1)
 
 
-def _compute_spawn_stats(report: RunReport, events: list[tuple[float, int, bool]]) -> None:
+def _compute_spawn_stats(report: RunReport, events: list[tuple[float, int, bool, bool]]) -> None:
     """Saturation ennemis (% du temps par nombre d'ennemis vivants) et stats par intervalle."""
     if not events:
         return
@@ -220,7 +259,7 @@ def _compute_spawn_stats(report: RunReport, events: list[tuple[float, int, bool]
     bucket_time = [0.0] * len(SATURATION_BUCKETS)
     alive = 0
     prev_ts = t0
-    for ts, delta, is_drone in events:
+    for ts, delta, is_drone, _ in events:
         bucket_time[_bucket_index(alive)] += ts - prev_ts
         prev_ts = ts
         if not is_drone:
@@ -232,9 +271,12 @@ def _compute_spawn_stats(report: RunReport, events: list[tuple[float, int, bool]
     # Découpage de la mission en intervalles égaux : spawns et drones tués par intervalle
     interval_spawns = [0] * N_INTERVALS
     interval_drones = [0] * N_INTERVALS
-    for ts, delta, is_drone in events:
+    strict = report.drone_source == "arbitration"
+    for ts, delta, is_drone, is_arby_drone in events:
         idx = min(int((ts - t0) / span * N_INTERVALS), N_INTERVALS - 1)
-        if is_drone and delta == -1:
+        # Même population de drones que la tuile « Drones tués », sinon les deux
+        # chiffres se contrediraient
+        if delta == -1 and (is_arby_drone if strict else is_drone):
             interval_drones[idx] += 1
         elif not is_drone and delta == 1:
             interval_spawns[idx] += 1

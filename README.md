@@ -8,9 +8,17 @@ Bot Discord dédié à l'**Arbitration** sur Warframe : analyse de runs via le f
 Uploadez votre fichier `EE.log` (sur Windows : `%LOCALAPPDATA%\Warframe\EE.log`) et le bot génère un **dashboard image** (style sombre/or) :
 
 - Tuiles de stats : ennemis apparus, kills par drone, intervalle drone moyen, drones tués, Vitus par minute, durée totale
-- Table de probabilité de Vitus (pire cas → roll divin) avec le percentile de votre run
+- Table de probabilité de Vitus (pire cas → roll divin) calculée en **loi binomiale exacte**, avec le percentile de votre run
 - Saturation ennemis : % du temps passé à chaque nombre d'ennemis vivants
 - Drones et spawns par intervalle (graphiques avec moyenne)
+
+**Options pour une analyse exacte** (le `EE.log` ne journalise pas les ramassages de façon fiable) :
+
+- `vitus:` — le total de Vitus Essence obtenu sur le run. **Recommandé** : c'est cette valeur qui rend le percentile réellement exact.
+- `drones:` — le nombre de drones d'Arbitration tués, si vous le connaissez mieux que le log.
+- `chance:` — la chance de drop par drone en %, selon vos boosters (défaut : 36).
+
+Le bot distingue les drones d'Arbitration des drones de tileset (Corpus notamment), qui ne lâchent pas de Vitus ; la source de chaque chiffre (log ou saisie) est indiquée sur le dashboard.
 
 Si le log ne contient pas les événements de spawn, le bot renvoie un résumé simple en embed : mission, durée, joueurs (pseudos en jeu uniquement), migrations d'hôte, arrivées/départs, warnings/erreurs moteur.
 

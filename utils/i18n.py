@@ -89,6 +89,15 @@ _CATALOG: dict[str, dict[str, str]] = {
     "an.nodash.title": {"fr": "ℹ️ Dashboard détaillé indisponible", "en": "ℹ️ Detailed dashboard unavailable", "no": "ℹ️ Detaljert dashbord utilgjengelig"},
     "an.privacy.title": {"fr": "🔒 Confidentialité", "en": "🔒 Privacy", "no": "🔒 Personvern"},
     "an.lines": {"fr": "{n} lignes analysées", "en": "{n} lines parsed", "no": "{n} linjer analysert"},
+    "an.vitus.hint.title": {"fr": "💡 Pour une analyse exacte", "en": "💡 For an exact analysis", "no": "💡 For en nøyaktig analyse"},
+    "an.vitus.hint": {
+        "fr": "Le `EE.log` ne compte pas les Vitus de façon fiable. Relancez avec "
+              "`/analyse vitus:<votre total>` pour situer précisément votre run.",
+        "en": "The `EE.log` does not count Vitus reliably. Run it again with "
+              "`/analyse vitus:<your total>` to place your run precisely.",
+        "no": "`EE.log` teller ikke Vitus pålitelig. Kjør igjen med "
+              "`/analyse vitus:<totalen din>` for å plassere runden nøyaktig.",
+    },
     # ----- Maps -----
     "map.saved": {"fr": "✅ Map enregistrée : {name}", "en": "✅ Map saved: {name}", "no": "✅ Kart lagret: {name}"},
     "map.mode": {"fr": "🎯 Mode", "en": "🎯 Mode", "no": "🎯 Modus"},

@@ -29,9 +29,17 @@ GOLD = "#e3b341"
 GOLD_BAR = "#d9a63a"
 RED = "#e5484d"
 
-# Chance de drop de Vitus par drone : 6 % de base × boosters/Récupérateur
-# (mêmes hypothèses que l'outil « arbi » de svesk : 100 % de ramassage, tous les buffs)
+# Chance qu'un drone d'Arbitration lâche une Vitus Essence, en tenant compte des
+# bonus (booster de ressources, Récupérateur…). Valeur par défaut alignée sur
+# l'outil « arbi » de svesk (100 % de ramassage, tous les buffs) ; ajustable par
+# le paramètre `chance` de /analyse pour coller à votre configuration réelle.
 VITUS_DROP_CHANCE = 0.36
+
+_DRONE_CAPTION = {
+    "saisi": "Nombre saisi",
+    "arbitration": "Drones d'Arbitration",
+    "large": "Estimation (tous drones)",
+}
 
 _LUCK_LEVELS = [
     (99, "Pire cas"),
@@ -42,11 +50,56 @@ _LUCK_LEVELS = [
     (10, "Chanceux"),
     (1, "Roll divin"),
 ]
-_Z = {99: -2.326, 90: -1.282, 75: -0.674, 50: 0.0, 25: 0.674, 10: 1.282, 1: 2.326}
 
 
-def _norm_cdf(x: float) -> float:
-    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+def _binomial_pmf(n: int, p: float) -> list[float]:
+    """Loi binomiale exacte P(X = k) pour k = 0…n.
+
+    Calcul en espace logarithmique (lgamma) : pas d'approximation normale et
+    aucun dépassement de capacité, même sur plusieurs milliers de drones.
+    """
+    if n <= 0:
+        return [1.0]
+    if p <= 0:
+        return [1.0] + [0.0] * n
+    if p >= 1:
+        return [0.0] * n + [1.0]
+    log_p, log_q = math.log(p), math.log1p(-p)
+    log_fact_n = math.lgamma(n + 1)
+    return [
+        math.exp(log_fact_n - math.lgamma(k + 1) - math.lgamma(n - k + 1)
+                 + k * log_p + (n - k) * log_q)
+        for k in range(n + 1)
+    ]
+
+
+def _survival(pmf: list[float]) -> list[float]:
+    """S[k] = P(X >= k), calculé du haut vers le bas pour limiter l'erreur."""
+    surv = [0.0] * (len(pmf) + 1)
+    for k in range(len(pmf) - 1, -1, -1):
+        surv[k] = surv[k + 1] + pmf[k]
+    return surv
+
+
+def vitus_quantile(pmf: list[float], chance_pct: float) -> int:
+    """Plus grand total de Vitus atteint avec au moins `chance_pct` % de probabilité."""
+    surv = _survival(pmf)
+    target = chance_pct / 100
+    best = 0
+    for k in range(len(pmf)):
+        if surv[k] >= target:
+            best = k
+        else:
+            break
+    return best
+
+
+def vitus_percentile(pmf: list[float], actual: int) -> float:
+    """Percentile du résultat (mid-P) : part des runs faisant strictement moins,
+    plus la moitié des runs faisant exactement pareil."""
+    actual = max(0, min(actual, len(pmf) - 1))
+    below = sum(pmf[:actual])
+    return (below + pmf[actual] / 2) * 100
 
 
 def _fmt_duration(seconds: float | None) -> str:
@@ -108,14 +161,19 @@ def _line_chart(ax, title: str, subtitle: str, values: list[int]):
             offset = 0.09 * span if v == vmax else -0.14 * span
             ax.text(xi, v + offset, f"{v:,}".replace(",", " "), ha="center",
                     color=INK, fontsize=9.5, fontweight="bold")
-    ax.text(x[-1] + 0.08, avg, f"moy {avg:,.1f}".replace(",", " "), color=INK_2,
-            fontsize=9, va="bottom", ha="right")
+    # Étiquette de moyenne du côté où le point extrême est le plus éloigné de la
+    # ligne, pour ne pas la recouvrir
+    label = f"moy {avg:,.1f}".replace(",", " ")
+    if abs(values[0] - avg) >= abs(values[-1] - avg):
+        ax.text(x[0] - 0.05, avg, label, color=INK_2, fontsize=9, va="bottom", ha="left")
+    else:
+        ax.text(x[-1] + 0.05, avg, label, color=INK_2, fontsize=9, va="bottom", ha="right")
     ax.set_xticks(x)
     ax.set_xlabel("Intervalle", color=MUTED, fontsize=9)
     ax.margins(y=0.22)
 
 
-def _luck_table(ax, report: RunReport):
+def _luck_table(ax, report: RunReport, chance: float = VITUS_DROP_CHANCE):
     ax.set_facecolor(TILE)
     ax.set_xticks([])
     ax.set_yticks([])
@@ -123,27 +181,30 @@ def _luck_table(ax, report: RunReport):
         spine.set_visible(False)
     ax.set_title("Probabilité de Vitus attendue", color=INK, fontsize=13,
                  fontweight="bold", loc="left", pad=18)
-    ax.text(0, 1.02, "Hypothèses : 100 % de ramassage, buffs et mod Récupérateur actifs.",
+    ax.text(0, 1.02, f"Loi binomiale exacte · {chance * 100:.0f} % de drop par drone "
+                     "· 100 % de ramassage supposé.",
             transform=ax.transAxes, color=MUTED, fontsize=9)
 
     n = report.drones_killed
     if not n:
-        ax.text(0.5, 0.5, "Aucun drone détecté dans le log", transform=ax.transAxes,
-                ha="center", va="center", color=MUTED, fontsize=11)
+        ax.text(0.5, 0.5, "Nombre de drones inconnu\n(indiquez-le avec l'option « drones »)",
+                transform=ax.transAxes, ha="center", va="center", color=MUTED, fontsize=11)
         return
 
-    mean = n * VITUS_DROP_CHANCE
-    sd = math.sqrt(n * VITUS_DROP_CHANCE * (1 - VITUS_DROP_CHANCE))
-
+    pmf = _binomial_pmf(n, chance)
     actual = report.vitus_pickups
     header_y = 0.86
+
     if actual:
-        pct = _norm_cdf((actual - mean) / sd) * 100
-        verdict = f"Percentile : {pct:.1f} %"
-        ax.text(0.02, 0.93, f"Vitus réels :  {actual}", transform=ax.transAxes,
+        pct = vitus_percentile(pmf, actual)
+        source = "saisi" if report.vitus_source == "saisi" else "d'après le log"
+        ax.text(0.02, 0.93, f"Vitus réels : {actual}  ({source})", transform=ax.transAxes,
                 color=INK, fontsize=12, fontweight="bold")
-        ax.text(0.98, 0.93, verdict, transform=ax.transAxes, ha="right",
-                color=RED if pct < 25 else INK_2, fontsize=11, fontweight="bold")
+        ax.text(0.98, 0.93, f"Meilleur que {pct:.1f} % des runs", transform=ax.transAxes,
+                ha="right", color=RED if pct < 25 else INK_2, fontsize=11, fontweight="bold")
+    else:
+        ax.text(0.02, 0.93, "Vitus réels : non renseignés (option « vitus »)",
+                transform=ax.transAxes, color=MUTED, fontsize=11)
 
     cols = (0.04, 0.38, 0.66)
     ax.text(cols[0], header_y, "Chance", transform=ax.transAxes, color=INK_2, fontsize=10, fontweight="bold")
@@ -153,15 +214,15 @@ def _luck_table(ax, report: RunReport):
 
     row_h = 0.105
     y = header_y - 0.09
-    prev_vitus = -math.inf
-    for chance, label in _LUCK_LEVELS:
-        vitus = int(round(mean + _Z[chance] * sd))
+    prev_vitus = -1
+    for chance_pct, label in _LUCK_LEVELS:
+        vitus = vitus_quantile(pmf, chance_pct)
         highlight = bool(actual) and prev_vitus < actual <= vitus
         if highlight:
             ax.add_patch(Rectangle((0.02, y - 0.03), 0.96, row_h - 0.02,
                                    transform=ax.transAxes, color=GOLD, alpha=0.14, zorder=1))
         weight = "bold" if highlight else "normal"
-        ax.text(cols[0], y, f"{chance} %", transform=ax.transAxes, color=INK_2, fontsize=10.5, fontweight=weight)
+        ax.text(cols[0], y, f"{chance_pct} %", transform=ax.transAxes, color=INK_2, fontsize=10.5, fontweight=weight)
         ax.text(cols[1], y, str(vitus), transform=ax.transAxes, color=INK, fontsize=10.5, fontweight="bold")
         ax.text(cols[2], y, label, transform=ax.transAxes, color=INK_2, fontsize=10.5, fontweight=weight)
         prev_vitus = vitus
@@ -207,7 +268,7 @@ def _saturation_chart(ax, report: RunReport):
             color=INK, fontsize=11, fontweight="bold")
 
 
-def render(report: RunReport) -> bytes:
+def render(report: RunReport, chance: float = VITUS_DROP_CHANCE) -> bytes:
     """Construit le dashboard PNG et retourne ses octets."""
     fig = plt.figure(figsize=(12.8, 14.2), dpi=110)
     fig.patch.set_facecolor(PAGE)
@@ -239,9 +300,10 @@ def render(report: RunReport) -> bytes:
         ("Intervalle drone moyen", f"{interval:.2f}s" if interval else "—",
          "Temps moyen entre deux drones"),
         ("Drones tués", f"{report.drones_killed:,}".replace(",", " ") if report.drones_killed else "—",
-         f"{report.drones_spawned} apparus" if report.drones_spawned else ""),
+         _DRONE_CAPTION.get(report.drone_source, "")),
         ("Vitus par minute", f"{vpm:.2f}/m" if vpm else "—",
-         f"{report.vitus_pickups} Vitus au total" if report.vitus_pickups else "Aucun ramassage détecté"),
+         f"{report.vitus_pickups} Vitus au total" + (" (saisi)" if report.vitus_source == "saisi" else "")
+         if report.vitus_pickups else "À renseigner avec l'option « vitus »"),
         ("Durée totale", _fmt_duration(report.duration_s),
          f"{report.waves} vagues" if report.waves else ""),
     ]
@@ -250,7 +312,7 @@ def render(report: RunReport) -> bytes:
         _tile(ax, label, value, caption)
 
     # --- Table de chance Vitus + saturation
-    _luck_table(fig.add_subplot(gs[3, 0:2]), report)
+    _luck_table(fig.add_subplot(gs[3, 0:2]), report, chance)
     _saturation_chart(fig.add_subplot(gs[3, 2]), report)
 
     # --- Graphiques par intervalle

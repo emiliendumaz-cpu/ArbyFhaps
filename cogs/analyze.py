@@ -20,8 +20,20 @@ class AnalyzeCog(commands.Cog):
         name="analyse",
         description="Analyse un fichier EE.log de Warframe (IPs et données perso supprimées automatiquement).",
     )
-    @app_commands.describe(fichier="Votre fichier EE.log (Windows : %LOCALAPPDATA%\\Warframe\\EE.log)")
-    async def analyse(self, interaction: discord.Interaction, fichier: discord.Attachment):
+    @app_commands.describe(
+        fichier="Votre fichier EE.log (Windows : %LOCALAPPDATA%\\Warframe\\EE.log)",
+        vitus="Vitus Essence obtenues sur ce run (recommandé : le log ne les compte pas de façon fiable)",
+        drones="Drones d'Arbitration tués, si vous connaissez le compte exact",
+        chance="Chance de drop par drone en %, selon vos boosters (défaut : 36)",
+    )
+    async def analyse(
+        self,
+        interaction: discord.Interaction,
+        fichier: discord.Attachment,
+        vitus: app_commands.Range[int, 0, 100000] | None = None,
+        drones: app_commands.Range[int, 1, 100000] | None = None,
+        chance: app_commands.Range[float, 0.1, 100.0] | None = None,
+    ):
         lang = i18n.user_lang(interaction.user.id)
 
         if fichier.size > eelog.MAX_LOG_BYTES:
@@ -42,10 +54,12 @@ class AnalyzeCog(commands.Cog):
         raw = (await fichier.read()).decode("utf-8", errors="replace")
         report = eelog.parse(raw)
         del raw  # le contenu brut n'est jamais conservé
+        eelog.apply_overrides(report, vitus=vitus, drones=drones)
+        drop_chance = (chance / 100) if chance else dashboard.VITUS_DROP_CHANCE
 
-        # Log riche (événements de spawn présents) → dashboard image
-        if report.has_spawn_data:
-            png = await asyncio.to_thread(dashboard.render, report)
+        # Log riche (ou compte de drones fourni) → dashboard image
+        if report.has_spawn_data or drones:
+            png = await asyncio.to_thread(dashboard.render, report, drop_chance)
             file = discord.File(io.BytesIO(png), filename="analyse-arbitration.png")
             embed = theme.make_embed(
                 i18n.t(lang, "an.title"),
@@ -57,6 +71,12 @@ class AnalyzeCog(commands.Cog):
                 embed.add_field(
                     name=i18n.t(lang, "an.players"),
                     value=" • ".join(f"`{p}`" for p in report.players),
+                    inline=False,
+                )
+            if vitus is None:
+                embed.add_field(
+                    name=i18n.t(lang, "an.vitus.hint.title"),
+                    value=i18n.t(lang, "an.vitus.hint"),
                     inline=False,
                 )
             embed.set_image(url="attachment://analyse-arbitration.png")
