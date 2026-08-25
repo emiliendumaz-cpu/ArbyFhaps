@@ -2,6 +2,7 @@
   {
     "name": "Cyte-09 — Guide Arbitration",
     "frame": "Cyte-09",
+    "variant": "Guide",
     "category": "DPS / Guide",
     "description": "Main DPS actuel de la méta Arbitration : cast le 1 puis spam le 2 avec la munition adaptée à la compo.\n• Électrique en général → config **Shock** (Helminth de Volt)\n• Électrique + économie de munitions → config **EM** (Helminth d'efficacité de munition)\n• Explosif → config **Sunder** (augment de Gauss), à jouer avec le Boar\n• Radiation → config **Smite** (Helminth d'Oberon)\n• Gaz → si compo gaz avec Citrine\nStats : ~254 % Force · 215 % Durée · 45 % Efficacité · 34 % Portée.",
     "mods": "Socle commun : Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash",
@@ -12,6 +13,7 @@
   {
     "name": "Cyte-09 — Shock (Volt)",
     "frame": "Cyte-09",
+    "variant": "Shock",
     "category": "DPS",
     "description": "Variante **électrique**, le choix général. Shock (Helminth de Volt) + Shock Trooper pour booster les dégâts électriques.",
     "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Shock Trooper",
@@ -21,6 +23,7 @@
   {
     "name": "Cyte-09 — Sunder (Gauss)",
     "frame": "Cyte-09",
+    "variant": "Sunder",
     "category": "DPS",
     "description": "Variante **explosive** avec Sunder (augment de Gauss en Helminth), à jouer avec le Boar.",
     "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Natural Talent, Thermal Transfer",
@@ -30,6 +33,7 @@
   {
     "name": "Cyte-09 — Nourish (Grendel)",
     "frame": "Cyte-09",
+    "variant": "Nourish",
     "category": "DPS",
     "description": "Variante **Nourish** (Helminth de Grendel) avec Precision Intensify pour la Force sur le 2.",
     "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Precision Intensify",
@@ -39,6 +43,7 @@
   {
     "name": "Cyte-09 — Smite (Oberon)",
     "frame": "Cyte-09",
+    "variant": "Smite",
     "category": "DPS",
     "description": "Variante **radiation** avec Smite (Helminth d'Oberon) + Smite Infusion.",
     "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Smite Infusion",
@@ -48,6 +53,7 @@
   {
     "name": "Cyte-09 — EM (éco. munitions)",
     "frame": "Cyte-09",
+    "variant": "EM",
     "category": "DPS",
     "description": "Variante **électrique** avec l'Helminth d'efficacité de munition. Primed Continuity porte la Durée à 270 %.",
     "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Primed Continuity",
@@ -57,6 +63,7 @@
   {
     "name": "Citrine — Compo gaz (arbi BB)",
     "frame": "Citrine",
+    "variant": "BB",
     "category": "DPS / Support",
     "description": "Prend la place de Vauban sur les **compos gaz**. On cast le BB de l'Helminth de Nokko et on garde le buff actif sur toute la durée de la partie, tout en maintenant le 2 et le 3 actifs.\nStats : 230 % Force · 336 % Durée · 45 % Efficacité · 79 % Portée.",
     "mods": "Power Donation, Power Drift, Narrow Minded, Precision Intensify, Constitution, Augur Message, Blind Rage, Archon Stretch, Nira's Hatred, Archon Continuity",
@@ -65,8 +72,90 @@
     "image": "citrine-arbi-bb.png"
   },
   {
+    "name": "Wisp — Arbitration",
+    "frame": "Wisp",
+    "variant": "Arbitration",
+    "category": "À compléter",
+    "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
+    "mods": "",
+    "arcanes": ""
+  },
+  {
+    "name": "Volt — Arbitration",
+    "frame": "Volt",
+    "variant": "Arbitration",
+    "category": "À compléter",
+    "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
+    "mods": "",
+    "arcanes": ""
+  },
+  {
+    "name": "Rhino — Arbitration",
+    "frame": "Rhino",
+    "variant": "Arbitration",
+    "category": "À compléter",
+    "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
+    "mods": "",
+    "arcanes": ""
+  },
+  {
+    "name": "Saryn — Arbitration",
+    "frame": "Saryn",
+    "variant": "Arbitration",
+    "category": "À compléter",
+    "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
+    "mods": "",
+    "arcanes": ""
+  },
+  {
+    "name": "Mirage — Arbitration",
+    "frame": "Mirage",
+    "variant": "Arbitration",
+    "category": "À compléter",
+    "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
+    "mods": "",
+    "arcanes": ""
+  },
+  {
+    "name": "Vauban — Arbitration",
+    "frame": "Vauban",
+    "variant": "Arbitration",
+    "category": "À compléter",
+    "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
+    "mods": "",
+    "arcanes": ""
+  },
+  {
+    "name": "Jade — Pre",
+    "frame": "Jade",
+    "variant": "Pre",
+    "category": "À compléter",
+    "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
+    "mods": "",
+    "arcanes": ""
+  },
+  {
+    "name": "Nokko — Pre",
+    "frame": "Nokko",
+    "variant": "Pre",
+    "category": "À compléter",
+    "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
+    "mods": "",
+    "arcanes": ""
+  },
+  {
+    "name": "Nidus — Pre",
+    "frame": "Nidus",
+    "variant": "Pre",
+    "category": "À compléter",
+    "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
+    "mods": "",
+    "arcanes": ""
+  },
+  {
     "name": "Focus & Conseils généraux Arbitration",
     "frame": "—",
+    "variant": "",
     "category": "Général",
     "description": "Pas de résurrection classique : ramassez les jetons de revive sur les drones. Les Drones d'Arbitration rendent les ennemis proches invulnérables : tuez-les en priorité (arme hitscan précise). Une seule rotation de récompense par intervalle. Emmenez un frame que vous maîtrisez : la mort coûte cher.",
     "mods": "Adaptation quasi obligatoire ; évitez les builds papier.",

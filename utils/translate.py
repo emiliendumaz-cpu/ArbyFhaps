@@ -18,7 +18,8 @@ from utils import i18n
 log = logging.getLogger(__name__)
 
 _CACHE_FILE = Path(__file__).resolve().parent.parent / "data" / "translations.json"
-_GOOGLE_CODES = {"fr": "fr", "en": "en", "no": "no"}
+_GOOGLE_CODES = {"fr": "fr", "en": "en", "no": "no", "es": "es",
+                 "it": "it", "sv": "sv", "fi": "fi", "vi": "vi"}
 MAX_CHARS = 4500  # limite Google ~5000 ; nos textes sont bien plus courts
 
 _cache: dict[str, str] | None = None
@@ -29,7 +30,10 @@ _ERROR_MARKERS = ("that's an error", "that’s an error", "error 500", "please t
                   "mymemory warning")
 
 # Codes de langue de MyMemory (traducteur de secours quand Google refuse)
-_MYMEMORY_CODES = {"fr": "fr-FR", "en": "en-GB", "no": "nb-NO"}  # nb-NO = bokmål
+_MYMEMORY_CODES = {
+    "fr": "fr-FR", "en": "en-GB", "no": "nb-NO",  # nb-NO = bokmål
+    "es": "es-ES", "it": "it-IT", "sv": "sv-SE", "fi": "fi-FI", "vi": "vi-VN",
+}
 # MyMemory refuse les requêtes de 500 caractères et plus ; marge pour l'encodage UTF-8
 _MYMEMORY_MAX = 450
 

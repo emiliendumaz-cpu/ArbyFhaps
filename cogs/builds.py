@@ -1,4 +1,10 @@
-"""Guide des builds Arbitration : /builds + gestion des builds personnalisés.
+"""Guide des builds Arbitration.
+
+ - /build <warframe> [variante] : menu déroulant des warframes, puis variante
+   proposée en autocomplétion selon la warframe choisie (ex. Cyte-09 → Shock,
+   Sunder, Nourish, Smite, EM ; Jade/Nokko/Nidus → Pre)
+ - /builds [catégorie] : catalogue complet, navigation ◀ ▶
+ - /build-add, /build-image, /build-remove : gestion par les admins
 
 Chaque build peut avoir une image (capture d'écran du build en jeu) stockée
 dans data/build_images/ — uploadée par un admin via /build-image.
@@ -19,9 +25,23 @@ IMAGES_DIR = Path(__file__).resolve().parent.parent / "data" / "build_images"
 IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 
+# Warframes proposées dans le menu déroulant de /build
+FRAMES = [
+    "Wisp", "Cyte-09", "Citrine", "Volt", "Rhino", "Saryn",
+    "Mirage", "Vauban", "Jade", "Nokko", "Nidus",
+]
+
 
 def _slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def _key(build: dict) -> str:
+    """Identité d'un build : warframe + variante, sinon son nom."""
+    frame, variant = build.get("frame", ""), build.get("variant", "")
+    if frame and variant:
+        return f"{frame.lower()}|{variant.lower()}"
+    return build["name"].lower()
 
 
 def _image_path(build: dict) -> Path | None:
@@ -52,6 +72,8 @@ async def _build_embed(build: dict, index: int, total: int, lang: str = "fr") ->
         footer_extra=i18n.t(lang, "b.footer", i=index + 1, n=total),
     )
     embed.add_field(name=i18n.t(lang, "b.frame"), value=build["frame"], inline=True)
+    if build.get("variant"):
+        embed.add_field(name=i18n.t(lang, "b.variant"), value=build["variant"], inline=True)
     embed.add_field(name=i18n.t(lang, "b.cat"), value=category, inline=True)
     if build.get("mods"):
         embed.add_field(name=i18n.t(lang, "b.mods"), value=build["mods"], inline=False)
@@ -111,11 +133,88 @@ class BuildsCog(commands.Cog):
         self.bot = bot
 
     def _all_builds(self, guild_id: int) -> list[dict]:
-        builds = list(storage.load_default_builds())
-        builds.extend(storage.load_guild(guild_id).get("builds", []))
-        return builds
+        """Builds par défaut, ceux du serveur écrasant les fiches de même
+        warframe + variante (ou de même nom)."""
+        merged: dict[str, dict] = {_key(b): b for b in storage.load_default_builds()}
+        for b in storage.load_guild(guild_id).get("builds", []):
+            merged[_key(b)] = b
+        return list(merged.values())
 
-    @app_commands.command(name="builds", description="Affiche les builds spécial Arbitration.")
+    def _frame_builds(self, guild_id: int, frame: str) -> list[dict]:
+        return [b for b in self._all_builds(guild_id)
+                if b.get("frame", "").lower() == frame.lower()]
+
+    async def _send_builds(self, interaction: discord.Interaction, builds: list[dict], lang: str):
+        """Une fiche seule, ou un paginateur si plusieurs."""
+        await interaction.response.defer(thinking=True)
+        if len(builds) == 1:
+            embed, file = await _build_embed(builds[0], 0, 1, lang)
+            await interaction.followup.send(embed=embed, **({"file": file} if file else {}))
+            return
+        view = BuildsPaginator(builds, lang)
+        embed, file = await view.current()
+        kwargs = {"file": file} if file else {}
+        view.message = await interaction.followup.send(embed=embed, view=view, wait=True, **kwargs)
+
+    # ------------------------------------------------------------------
+    # /build : menu déroulant warframe + variante dépendante
+    # ------------------------------------------------------------------
+
+    @app_commands.command(name="build", description="Affiche le build d'une warframe pour l'Arbitration.")
+    @app_commands.describe(
+        warframe="La warframe",
+        variante="La variante du build (dépend de la warframe choisie)",
+    )
+    @app_commands.choices(warframe=[app_commands.Choice(name=f, value=f) for f in FRAMES])
+    async def build(self, interaction: discord.Interaction, warframe: str, variante: str | None = None):
+        lang = i18n.user_lang(interaction.user.id)
+        builds = self._frame_builds(interaction.guild_id, warframe)
+        if not builds:
+            await interaction.response.send_message(
+                embed=theme.error_embed(i18n.t(lang, "b.frame.none", frame=warframe), lang),
+                ephemeral=True,
+            )
+            return
+
+        if variante:
+            matching = [b for b in builds if b.get("variant", "").lower() == variante.lower()]
+            if not matching:
+                available = ", ".join(f"`{b['variant']}`" for b in builds if b.get("variant")) or "—"
+                await interaction.response.send_message(
+                    embed=theme.error_embed(
+                        i18n.t(lang, "b.variant.none", variant=variante, frame=warframe, list=available),
+                        lang,
+                    ),
+                    ephemeral=True,
+                )
+                return
+            builds = matching
+
+        await self._send_builds(interaction, builds, lang)
+
+    @build.autocomplete("variante")
+    async def build_variant_autocomplete(self, interaction: discord.Interaction, current: str):
+        # La warframe déjà saisie dans la commande filtre les variantes proposées
+        frame = getattr(interaction.namespace, "warframe", None)
+        if not frame:
+            return []
+        current_lower = current.lower()
+        seen, choices = set(), []
+        for b in self._frame_builds(interaction.guild_id, frame):
+            variant = b.get("variant")
+            if not variant or variant.lower() in seen:
+                continue
+            if current_lower and current_lower not in variant.lower():
+                continue
+            seen.add(variant.lower())
+            choices.append(app_commands.Choice(name=variant, value=variant))
+        return choices[:25]
+
+    # ------------------------------------------------------------------
+    # /builds : catalogue complet
+    # ------------------------------------------------------------------
+
+    @app_commands.command(name="builds", description="Affiche tous les builds spécial Arbitration.")
     @app_commands.describe(categorie="Filtrer par catégorie (optionnel)")
     async def builds(self, interaction: discord.Interaction, categorie: str | None = None):
         lang = i18n.user_lang(interaction.user.id)
@@ -128,13 +227,7 @@ class BuildsCog(commands.Cog):
                 ephemeral=True,
             )
             return
-        await interaction.response.defer(thinking=True)
-        view = BuildsPaginator(builds, lang)
-        embed, file = await view.current()
-        if file:
-            view.message = await interaction.followup.send(embed=embed, view=view, file=file, wait=True)
-        else:
-            view.message = await interaction.followup.send(embed=embed, view=view, wait=True)
+        await self._send_builds(interaction, builds, lang)
 
     @builds.autocomplete("categorie")
     async def category_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -146,7 +239,11 @@ class BuildsCog(commands.Cog):
             if current_lower in c.lower()
         ][:25]
 
-    @app_commands.command(name="build-image", description="(Admin) Attache une capture d'écran à un build (affichée dans /builds).")
+    # ------------------------------------------------------------------
+    # Gestion (admins)
+    # ------------------------------------------------------------------
+
+    @app_commands.command(name="build-image", description="(Admin) Attache une capture d'écran à un build (affichée dans /build).")
     @app_commands.describe(nom="Nom du build (autocomplétion)", fichier="Capture d'écran (png/jpg/webp, max 8 Mo)")
     @app_commands.default_permissions(manage_guild=True)
     async def build_image(self, interaction: discord.Interaction, nom: str, fichier: discord.Attachment):
@@ -202,50 +299,73 @@ class BuildsCog(commands.Cog):
             if current_lower in b["name"].lower()
         ][:25]
 
-    @app_commands.command(name="build-add", description="(Admin) Ajoute un build Arbitration personnalisé au serveur.")
+    @app_commands.command(name="build-add", description="(Admin) Ajoute ou remplace un build Arbitration.")
     @app_commands.describe(
-        nom="Nom du build",
-        frame="Warframe concernée",
+        frame="Warframe (choisissez dans la liste pour qu'elle apparaisse dans /build)",
+        variante="Variante du build (ex : Shock, Sunder, Pre…)",
+        nom="Nom affiché de la fiche",
         categorie="Catégorie (DPS, Support, Loot…)",
         description="Description / rôle du build",
         mods="Liste des mods (optionnel)",
         arcanes="Arcanes recommandés (optionnel)",
+        shards="Éclats d'Archonte (optionnel)",
     )
     @app_commands.default_permissions(manage_guild=True)
     async def build_add(
         self,
         interaction: discord.Interaction,
-        nom: str,
         frame: str,
+        variante: str,
+        nom: str,
         categorie: str,
         description: str,
         mods: str | None = None,
         arcanes: str | None = None,
+        shards: str | None = None,
     ):
+        entry = {
+            "name": nom,
+            "frame": frame,
+            "variant": variante,
+            "category": categorie,
+            "description": description,
+            "mods": mods or "",
+            "arcanes": arcanes or "",
+            "shards": shards or "",
+        }
         data = storage.load_guild(interaction.guild_id)
         data.setdefault("builds", [])
-        data["builds"] = [b for b in data["builds"] if b["name"].lower() != nom.lower()]
-        data["builds"].append(
-            {
-                "name": nom,
-                "frame": frame,
-                "category": categorie,
-                "description": description,
-                "mods": mods or "",
-                "arcanes": arcanes or "",
-            }
-        )
+        # Remplace la fiche de même warframe + variante (ou de même nom)
+        data["builds"] = [b for b in data["builds"] if _key(b) != _key(entry)]
+        data["builds"].append(entry)
         storage.save_guild(interaction.guild_id, data)
+
         lang = i18n.user_lang(interaction.user.id)
         await interaction.response.send_message(
             embed=theme.make_embed(
-                i18n.t(lang, "b.added", name=nom, frame=frame),
+                i18n.t(lang, "b.added", name=nom, frame=f"{frame} · {variante}"),
                 i18n.t(lang, "b.added.hint"),
                 color=theme.GREEN,
             )
         )
 
-    @app_commands.command(name="build-remove", description="(Admin) Supprime un build personnalisé du serveur.")
+    @build_add.autocomplete("frame")
+    async def frame_autocomplete(self, interaction: discord.Interaction, current: str):
+        current_lower = current.lower()
+        return [
+            app_commands.Choice(name=f, value=f)
+            for f in FRAMES
+            if current_lower in f.lower()
+        ][:25]
+
+    @build_add.autocomplete("variante")
+    async def build_add_variant_autocomplete(self, interaction: discord.Interaction, current: str):
+        frame = getattr(interaction.namespace, "frame", None)
+        if not frame:
+            return []
+        return await self.build_variant_autocomplete(interaction, current)
+
+    @app_commands.command(name="build-remove", description="(Admin) Supprime un build ajouté sur ce serveur.")
     @app_commands.describe(nom="Nom du build à supprimer")
     @app_commands.default_permissions(manage_guild=True)
     async def build_remove(self, interaction: discord.Interaction, nom: str):
@@ -263,6 +383,15 @@ class BuildsCog(commands.Cog):
         await interaction.response.send_message(
             embed=theme.make_embed(i18n.t(lang, "b.removed", name=nom), color=theme.GREEN)
         )
+
+    @build_remove.autocomplete("nom")
+    async def guild_build_autocomplete(self, interaction: discord.Interaction, current: str):
+        current_lower = current.lower()
+        return [
+            app_commands.Choice(name=b["name"], value=b["name"])
+            for b in storage.load_guild(interaction.guild_id).get("builds", [])
+            if current_lower in b["name"].lower()
+        ][:25]
 
 
 async def setup(bot: commands.Bot):
