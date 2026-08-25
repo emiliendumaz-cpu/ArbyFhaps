@@ -32,10 +32,14 @@ Si le log ne contient pas les événements de spawn, le bot renvoie un résumé 
 
 Chaque serveur Discord a sa propre configuration.
 
-### ⚖️ `/builds` — Guide des builds Arbitration
-- `/builds [categorie]` — affiche les builds spécial Arbitration (navigation par boutons). Des builds par défaut sont fournis (Saryn, Octavia, Wisp, Khora, Nekros, Frost + conseils généraux).
-- `/build-add` *(admin)* — ajoute un build personnalisé propre au serveur
-- `/build-remove` *(admin)* — supprime un build personnalisé
+### ⚖️ Builds Arbitration
+- **`/build <warframe> [variante]`** — menu déroulant des warframes (Wisp, Cyte-09, Citrine, Volt, Rhino, Saryn, Mirage, Vauban, Jade, Nokko, Nidus), puis la **variante proposée en autocomplétion selon la warframe choisie** : `/build Cyte-09 Sunder`, `/build Jade Pre`… Sans variante, toutes les fiches de la warframe défilent avec les boutons ◀ ▶.
+- `/builds [categorie]` — le catalogue complet, toutes warframes confondues
+- `/build-add` *(admin)* — ajoute ou **remplace** une fiche (même warframe + même variante = remplacement)
+- `/build-image` *(admin)* — attache une capture d'écran à une fiche
+- `/build-remove` *(admin)* — supprime une fiche ajoutée sur le serveur
+
+Les builds Cyte-09 (Guide, Shock, Sunder, Nourish, Smite, EM) et Citrine (BB) sont renseignés ; les autres warframes attendent leur contenu et sont marquées « À compléter ».
 
 ### ⏰ Suivi des arbitrations (message auto-actualisé)
 - `/tracker-start` *(admin)* — installe dans le salon un message que le bot **édite automatiquement toutes les 5 minutes** : arbitration en cours (nœud, mode, ennemi, compte à rebours) et prochaines arbitrations quand la source de prédictions répond
@@ -83,7 +87,7 @@ En développement, renseignez `GUILD_ID` dans `.env` pour que les commandes slas
 bot.py               # Point d'entrée, chargement des cogs, sync des commandes
 cogs/analyze.py      # /analyse — analyse EE.log
 cogs/maps.py         # /map-add /map-remove /maps /map
-cogs/builds.py       # /builds /build-add /build-remove
+cogs/builds.py       # /build /builds /build-add /build-image /build-remove
 cogs/tracker.py      # /arbitration /tracker-start /tracker-stop /tier-set /sources
 cogs/language.py     # /language
 utils/eelog.py       # Parseur EE.log + anonymisation (IP, IDs, MAC, chemins…)
