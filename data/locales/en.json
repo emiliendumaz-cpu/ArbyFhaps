@@ -31,6 +31,7 @@
  "b.img.saved.desc": "It will show in `/build` **instead of the mod list** (the screenshot already shows ranks and polarities).",
  "b.img.toobig": "Image too large (max 8 MB).",
  "b.mods": "🧩 Mods",
+ "b.mods.pending": "*Screenshot pending — an admin can add it with `/build-image`.*",
  "b.next": "Next ▶",
  "b.nocat": "No build found for category “{cat}”.",
  "b.notfound": "Build **{name}** not found (default builds cannot be removed).",

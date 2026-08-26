@@ -31,6 +31,7 @@
  "b.img.saved.desc": "Se näkyy komennossa `/build` **modilistan sijaan** (kuvakaappaus näyttää jo tasot ja polariteetit).",
  "b.img.toobig": "Kuva on liian suuri (enintään 8 Mt).",
  "b.mods": "🧩 Modit",
+ "b.mods.pending": "*Kuvakaappaus puuttuu — ylläpitäjä voi lisätä sen komennolla `/build-image`.*",
  "b.next": "Seuraava ▶",
  "b.nocat": "Kategoriasta ”{cat}” ei löytynyt yhtään buildia.",
  "b.notfound": "Buildia **{name}** ei löytynyt (oletusbuildeja ei voi poistaa).",

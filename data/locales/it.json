@@ -31,6 +31,7 @@
  "b.img.saved.desc": "Comparirà in `/build` **al posto dell'elenco dei mod** (lo screenshot mostra già ranghi e polarità).",
  "b.img.toobig": "Immagine troppo pesante (max 8 MB).",
  "b.mods": "🧩 Mod",
+ "b.mods.pending": "*Screenshot mancante — un amministratore può aggiungerlo con `/build-image`.*",
  "b.next": "Successiva ▶",
  "b.nocat": "Nessuna build trovata nella categoria «{cat}».",
  "b.notfound": "Build **{name}** non trovata (le build predefinite non si possono rimuovere).",

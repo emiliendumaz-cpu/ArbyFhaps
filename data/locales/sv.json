@@ -31,6 +31,7 @@
  "b.img.saved.desc": "Den visas i `/build` **istället för modlistan** (skärmbilden visar redan rang och polariteter).",
  "b.img.toobig": "Bilden är för stor (max 8 MB).",
  "b.mods": "🧩 Mods",
+ "b.mods.pending": "*Skärmbild saknas — en administratör kan lägga till den med `/build-image`.*",
  "b.next": "Nästa ▶",
  "b.nocat": "Ingen build hittades i kategorin ”{cat}”.",
  "b.notfound": "Hittade inte builden **{name}** (standardbuilds kan inte tas bort).",

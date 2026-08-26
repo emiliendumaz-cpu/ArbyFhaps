@@ -5,11 +5,9 @@
     "variant": "Guide",
     "category": "DPS / Guide",
     "description": "Main DPS actuel de la méta Arbitration : cast le 1 puis spam le 2 avec la munition adaptée à la compo.\n• Électrique en général → config **Shock** (Helminth de Volt)\n• Électrique + économie de munitions → config **EM** (Helminth d'efficacité de munition)\n• Explosif → config **Sunder** (augment de Gauss), à jouer avec le Boar\n• Radiation → config **Smite** (Helminth d'Oberon)\n• Gaz → si compo gaz avec Citrine\nStats : ~254 % Force · 215 % Durée · 45 % Efficacité · 34 % Portée.",
-    "mods": "Socle commun : Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash",
     "arcanes": "Arcane Battery, Arcane Sculptor",
     "shards": "5 éclats d'Archonte jaunes tauforgés : 2× +37,5 % Vitesse d'incantation, 3× +22,5 % Vélocité de parkour",
-    "image": "cyte-09-shards.png",
-    "show_mods": true
+    "image": "cyte-09-shards.png"
   },
   {
     "name": "Cyte-09 — Shock (Volt)",
@@ -17,7 +15,6 @@
     "variant": "Shock",
     "category": "DPS",
     "description": "Variante **électrique**, le choix général. Shock (Helminth de Volt) + Shock Trooper pour booster les dégâts électriques.",
-    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Shock Trooper",
     "arcanes": "Arcane Battery, Arcane Sculptor",
     "image": "cyte-09-shock.png"
   },
@@ -27,7 +24,6 @@
     "variant": "Sunder",
     "category": "DPS",
     "description": "Variante **explosive** avec Sunder (augment de Gauss en Helminth), à jouer avec le Boar.",
-    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Natural Talent, Thermal Transfer",
     "arcanes": "Arcane Battery, Arcane Sculptor",
     "image": "cyte-09-sunder.png"
   },
@@ -37,7 +33,6 @@
     "variant": "Nourish",
     "category": "DPS",
     "description": "Variante **Nourish** (Helminth de Grendel) avec Precision Intensify pour la Force sur le 2.",
-    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Precision Intensify",
     "arcanes": "Arcane Battery, Arcane Sculptor",
     "image": "cyte-09-nourish.png"
   },
@@ -47,7 +42,6 @@
     "variant": "Smite",
     "category": "DPS",
     "description": "Variante **radiation** avec Smite (Helminth d'Oberon) + Smite Infusion.",
-    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Smite Infusion",
     "arcanes": "Arcane Battery, Arcane Sculptor",
     "image": "cyte-09-smite.png"
   },
@@ -57,7 +51,6 @@
     "variant": "EM",
     "category": "DPS",
     "description": "Variante **électrique** avec l'Helminth d'efficacité de munition. Primed Continuity porte la Durée à 270 %.",
-    "mods": "Power Donation, Vigilante Pursuit, Blind Rage, Constitution, Narrow Minded, Enemy Sense, Transient Fortitude, Lightning Dash, Nira's Hatred, Primed Continuity",
     "arcanes": "Arcane Battery, Arcane Sculptor",
     "image": "cyte-09-em.png"
   },
@@ -67,7 +60,6 @@
     "variant": "BB",
     "category": "DPS / Support",
     "description": "Prend la place de Vauban sur les **compos gaz**. On cast le BB de l'Helminth de Nokko et on garde le buff actif sur toute la durée de la partie, tout en maintenant le 2 et le 3 actifs.\nStats : 230 % Force · 336 % Durée · 45 % Efficacité · 79 % Portée.",
-    "mods": "Power Donation, Power Drift, Narrow Minded, Precision Intensify, Constitution, Augur Message, Blind Rage, Archon Stretch, Nira's Hatred, Archon Continuity",
     "arcanes": "Arcane Concentration, Arcane Bellicose",
     "shards": "2× +37,5 % Vitesse d'incantation (jaune tauforgé), 2× +22,5 % Vélocité de parkour (jaune tauforgé), 1× +15 % Durée de pouvoir (cramoisi tauforgé)",
     "image": "citrine-arbi-bb.png"
@@ -78,7 +70,6 @@
     "variant": "Arbitration",
     "category": "À compléter",
     "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
-    "mods": "",
     "arcanes": ""
   },
   {
@@ -87,7 +78,6 @@
     "variant": "Arbitration",
     "category": "À compléter",
     "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
-    "mods": "",
     "arcanes": ""
   },
   {
@@ -96,7 +86,6 @@
     "variant": "Arbitration",
     "category": "À compléter",
     "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
-    "mods": "",
     "arcanes": ""
   },
   {
@@ -105,7 +94,6 @@
     "variant": "Arbitration",
     "category": "À compléter",
     "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
-    "mods": "",
     "arcanes": ""
   },
   {
@@ -114,7 +102,6 @@
     "variant": "Arbitration",
     "category": "À compléter",
     "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
-    "mods": "",
     "arcanes": ""
   },
   {
@@ -123,7 +110,6 @@
     "variant": "Arbitration",
     "category": "À compléter",
     "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
-    "mods": "",
     "arcanes": ""
   },
   {
@@ -132,7 +118,6 @@
     "variant": "Pre",
     "category": "À compléter",
     "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
-    "mods": "",
     "arcanes": ""
   },
   {
@@ -141,7 +126,6 @@
     "variant": "Pre",
     "category": "À compléter",
     "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
-    "mods": "",
     "arcanes": ""
   },
   {
@@ -150,7 +134,6 @@
     "variant": "Pre",
     "category": "À compléter",
     "description": "⏳ *Build pas encore renseigné.* Un admin peut le remplir avec `/build-add` (même warframe et même variante pour remplacer cette fiche), puis y joindre la capture avec `/build-image`.",
-    "mods": "",
     "arcanes": ""
   },
   {
@@ -158,8 +141,7 @@
     "frame": "—",
     "variant": "",
     "category": "Général",
-    "description": "Pas de résurrection classique : ramassez les jetons de revive sur les drones. Les Drones d'Arbitration rendent les ennemis proches invulnérables : tuez-les en priorité (arme hitscan précise). Une seule rotation de récompense par intervalle. Emmenez un frame que vous maîtrisez : la mort coûte cher.",
-    "mods": "Adaptation quasi obligatoire ; évitez les builds papier.",
+    "description": "Pas de résurrection classique : ramassez les jetons de revive sur les drones. Les Drones d'Arbitration rendent les ennemis proches invulnérables : tuez-les en priorité (arme hitscan précise). Une seule rotation de récompense par intervalle. Emmenez un frame que vous maîtrisez : la mort coûte cher.\nAdaptation est quasi obligatoire : évitez les builds papier.",
     "arcanes": "Magus Repair (opérateur) pour compenser l'absence de heals."
   }
 ]

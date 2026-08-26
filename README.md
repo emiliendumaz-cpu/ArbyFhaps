@@ -36,7 +36,7 @@ Chaque serveur Discord a sa propre configuration.
 - **`/build <warframe> [variante]`** — menu déroulant des warframes (Wisp, Cyte-09, Citrine, Volt, Rhino, Saryn, Mirage, Vauban, Jade, Nokko, Nidus), puis la **variante proposée en autocomplétion selon la warframe choisie** : `/build Cyte-09 Sunder`, `/build Jade Pre`… Sans variante, toutes les fiches de la warframe défilent avec les boutons ◀ ▶.
 - `/builds [categorie]` — le catalogue complet, toutes warframes confondues
 - `/build-add` *(admin)* — ajoute ou **remplace** une fiche (même warframe + même variante = remplacement)
-- `/build-image` *(admin)* — attache une capture d'écran à une fiche. **La capture remplace alors la liste texte des mods** (elle montre déjà rangs et polarités) ; ajoutez `"show_mods": true` à la fiche pour afficher les deux.
+- `/build-image` *(admin)* — attache la capture d'écran du build à une fiche. **Les mods ne sont jamais retranscrits en texte** : c'est la capture qui les porte, avec leurs rangs et leurs polarités. Tant qu'elle manque, la fiche l'indique.
 - `/build-remove` *(admin)* — supprime une fiche ajoutée sur le serveur
 
 Les builds Cyte-09 (Guide, Shock, Sunder, Nourish, Smite, EM) et Citrine (BB) sont renseignés ; les autres warframes attendent leur contenu et sont marquées « À compléter ».

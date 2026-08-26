@@ -31,6 +31,7 @@
  "b.img.saved.desc": "Aparecerá en `/build` **en lugar de la lista de mods** (la captura ya muestra rangos y polaridades).",
  "b.img.toobig": "Imagen demasiado pesada (máx. 8 MB).",
  "b.mods": "🧩 Mods",
+ "b.mods.pending": "*Falta la captura — un administrador puede añadirla con `/build-image`.*",
  "b.next": "Siguiente ▶",
  "b.nocat": "No se encontró ninguna build en la categoría «{cat}».",
  "b.notfound": "No se encontró la build **{name}** (las builds por defecto no se pueden eliminar).",

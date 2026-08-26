@@ -1,5 +1,8 @@
 """Guide des builds Arbitration.
 
+Les mods ne sont jamais retranscrits en texte : chaque fiche porte la capture
+d'écran du build (rangs et polarités compris), attachée via /build-image.
+
  - /build <warframe> [variante] : menu déroulant des warframes, puis variante
    proposée en autocomplétion selon la warframe choisie (ex. Cyte-09 → Shock,
    Sunder, Nourish, Smite, EM ; Jade/Nokko/Nidus → Pre)
@@ -76,11 +79,11 @@ async def _build_embed(build: dict, index: int, total: int, lang: str = "fr") ->
         embed.add_field(name=i18n.t(lang, "b.variant"), value=build["variant"], inline=True)
     embed.add_field(name=i18n.t(lang, "b.cat"), value=category, inline=True)
 
-    # La capture d'écran remplace la liste texte des mods : elle montre aussi
-    # les rangs et les polarités. « show_mods » force l'affichage des deux.
+    # Les mods sont portés par la capture d'écran, jamais retranscrits en texte :
+    # elle montre aussi les rangs et les polarités. Tant qu'elle manque, on le dit.
     path = _image_path(build)
-    if build.get("mods") and (path is None or build.get("show_mods")):
-        embed.add_field(name=i18n.t(lang, "b.mods"), value=build["mods"], inline=False)
+    if path is None and build.get("category") != "Général":
+        embed.add_field(name=i18n.t(lang, "b.mods"), value=i18n.t(lang, "b.mods.pending"), inline=False)
     if build.get("arcanes"):
         embed.add_field(name=i18n.t(lang, "b.arcanes"), value=build["arcanes"], inline=False)
     if shards:
@@ -309,7 +312,6 @@ class BuildsCog(commands.Cog):
         nom="Nom affiché de la fiche",
         categorie="Catégorie (DPS, Support, Loot…)",
         description="Description / rôle du build",
-        mods="Liste des mods (optionnel)",
         arcanes="Arcanes recommandés (optionnel)",
         shards="Éclats d'Archonte (optionnel)",
     )
@@ -322,7 +324,6 @@ class BuildsCog(commands.Cog):
         nom: str,
         categorie: str,
         description: str,
-        mods: str | None = None,
         arcanes: str | None = None,
         shards: str | None = None,
     ):
@@ -332,7 +333,6 @@ class BuildsCog(commands.Cog):
             "variant": variante,
             "category": categorie,
             "description": description,
-            "mods": mods or "",
             "arcanes": arcanes or "",
             "shards": shards or "",
         }

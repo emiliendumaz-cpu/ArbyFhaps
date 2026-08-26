@@ -31,6 +31,7 @@
  "b.img.saved.desc": "Ảnh sẽ hiện trong `/build` **thay cho danh sách mod** (ảnh đã cho thấy cấp và polarity).",
  "b.img.toobig": "Ảnh quá nặng (tối đa 8 MB).",
  "b.mods": "🧩 Mod",
+ "b.mods.pending": "*Chưa có ảnh — quản trị viên có thể thêm bằng `/build-image`.*",
  "b.next": "Tiếp ▶",
  "b.nocat": "Không tìm thấy build nào trong phân loại “{cat}”.",
  "b.notfound": "Không tìm thấy build **{name}** (không thể xóa build mặc định).",
