@@ -80,6 +80,7 @@
  "tr.noperm": "Jag har inte behörighet att skicka meddelanden i den här kanalen.",
  "tr.nopred": "*Prognoser är inte tillgängliga just nu.*",
  "tr.refresh": "Uppdateras var {n}:e min",
+ "tr.refresh.one": "Uppdateras varje minut",
  "tr.stopped": "🗑️ Bevakning stoppad",
  "tr.tierset": "✅ {emoji} {node} fick betyget {tier}",
  "tr.tierset.desc": "Betyget tillämpas vid nästa uppdatering.",

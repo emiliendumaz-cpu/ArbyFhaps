@@ -80,6 +80,7 @@
  "tr.noperm": "Je n'ai pas la permission d'envoyer des messages dans ce salon.",
  "tr.nopred": "*Prédictions indisponibles pour le moment.*",
  "tr.refresh": "Actualisé toutes les {n} min",
+ "tr.refresh.one": "Actualisé chaque minute",
  "tr.stopped": "🗑️ Tracker arrêté",
  "tr.tierset": "✅ {emoji} {node} noté {tier}",
  "tr.tierset.desc": "La note sera appliquée à la prochaine actualisation du tracker.",

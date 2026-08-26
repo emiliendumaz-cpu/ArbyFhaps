@@ -80,6 +80,7 @@
  "tr.noperm": "Tôi không có quyền gửi tin nhắn trong kênh này.",
  "tr.nopred": "*Hiện chưa có dự đoán.*",
  "tr.refresh": "Cập nhật mỗi {n} phút",
+ "tr.refresh.one": "Cập nhật mỗi phút",
  "tr.stopped": "🗑️ Đã dừng bảng theo dõi",
  "tr.tierset": "✅ {emoji} {node} được xếp hạng {tier}",
  "tr.tierset.desc": "Hạng sẽ được áp dụng ở lần cập nhật kế tiếp.",

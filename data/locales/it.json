@@ -80,6 +80,7 @@
  "tr.noperm": "Non ho il permesso di inviare messaggi in questo canale.",
  "tr.nopred": "*Previsioni non disponibili al momento.*",
  "tr.refresh": "Aggiornato ogni {n} min",
+ "tr.refresh.one": "Aggiornato ogni minuto",
  "tr.stopped": "🗑️ Monitoraggio interrotto",
  "tr.tierset": "✅ {emoji} {node} valutato {tier}",
  "tr.tierset.desc": "Il voto verrà applicato al prossimo aggiornamento.",

@@ -42,7 +42,7 @@ Chaque serveur Discord a sa propre configuration.
 Les builds Cyte-09 (Guide, Shock, Sunder, Nourish, Smite, EM) et Citrine (BB) sont renseignés ; les autres warframes attendent leur contenu et sont marquées « À compléter ».
 
 ### ⏰ Suivi des arbitrations (message auto-actualisé)
-- `/tracker-start` *(admin)* — installe dans le salon un message que le bot **édite automatiquement toutes les 5 minutes** : arbitration en cours (nœud, mode, ennemi, compte à rebours) et prochaines arbitrations quand la source de prédictions répond
+- `/tracker-start` *(admin)* — installe dans le salon un message que le bot **édite automatiquement chaque minute** : arbitration en cours (nœud, mode, ennemi, compte à rebours) et prochaines arbitrations quand la source de prédictions répond
 - `/arbitration` — la même chose en une fois, sans message permanent
 - `/tracker-stop` *(admin)* — arrête et supprime le message
 - `/tier-set` *(admin)* — ajuste la note d'un nœud pour ce serveur

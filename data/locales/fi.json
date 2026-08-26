@@ -80,6 +80,7 @@
  "tr.noperm": "Minulla ei ole oikeutta lähettää viestejä tähän kanavaan.",
  "tr.nopred": "*Ennusteet eivät ole juuri nyt saatavilla.*",
  "tr.refresh": "Päivittyy {n} minuutin välein",
+ "tr.refresh.one": "Päivittyy joka minuutti",
  "tr.stopped": "🗑️ Seuranta pysäytetty",
  "tr.tierset": "✅ {emoji} {node} sai arvosanan {tier}",
  "tr.tierset.desc": "Arvosana tulee voimaan seuraavassa päivityksessä.",

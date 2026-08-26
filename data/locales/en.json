@@ -80,6 +80,7 @@
  "tr.noperm": "I don't have permission to send messages in this channel.",
  "tr.nopred": "*Predictions unavailable right now.*",
  "tr.refresh": "Refreshes every {n} min",
+ "tr.refresh.one": "Refreshes every minute",
  "tr.stopped": "🗑️ Tracker stopped",
  "tr.tierset": "✅ {emoji} {node} rated {tier}",
  "tr.tierset.desc": "The rating applies at the next tracker refresh.",

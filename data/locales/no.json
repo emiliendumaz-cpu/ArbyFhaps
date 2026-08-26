@@ -80,6 +80,7 @@
  "tr.noperm": "Jeg har ikke tillatelse til å sende meldinger i denne kanalen.",
  "tr.nopred": "*Prognoser er utilgjengelige akkurat nå.*",
  "tr.refresh": "Oppdateres hvert {n}. min",
+ "tr.refresh.one": "Oppdateres hvert minutt",
  "tr.stopped": "🗑️ Oversikt stoppet",
  "tr.tierset": "✅ {emoji} {node} vurdert til {tier}",
  "tr.tierset.desc": "Vurderingen gjelder fra neste oppdatering.",

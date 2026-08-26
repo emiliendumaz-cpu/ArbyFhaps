@@ -14,6 +14,7 @@ officielle browse.wf > repli par mode de mission.
 
 from __future__ import annotations
 
+import bisect
 import logging
 import re
 from dataclasses import dataclass
@@ -301,15 +302,22 @@ async def get_current_and_upcoming(
     static = await _load_static(session, lang)
 
     now = int(datetime.now(timezone.utc).timestamp())
+    # Le planning couvre plusieurs années : on saute directement à l'heure
+    # courante au lieu de le parcourir en entier à chaque actualisation
+    times = [ts for ts, _ in entries]
+    idx = bisect.bisect_right(times, now) - 1
+
     current: Arbitration | None = None
-    upcoming: list[Arbitration] = []
-    for ts, solnode in entries:
+    if idx >= 0:
+        ts, solnode = entries[idx]
         if ts <= now < ts + 3600:
             current = _make_arbitration(ts, solnode, static, lang)
-        elif ts > now:
-            upcoming.append(_make_arbitration(ts, solnode, static, lang))
-            if len(upcoming) >= limit:
-                break
+
+    upcoming = [
+        _make_arbitration(ts, solnode, static, lang)
+        for ts, solnode in entries[idx + 1: idx + 1 + limit]
+        if ts > now
+    ]
     return current, upcoming
 
 

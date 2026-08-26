@@ -21,7 +21,7 @@ from utils import i18n, storage, theme, translate, worldstate
 
 log = logging.getLogger(__name__)
 
-REFRESH_MINUTES = 5
+REFRESH_MINUTES = 1
 
 
 def _fmt_line(arby: worldstate.Arbitration, tier: str) -> str:
@@ -58,7 +58,8 @@ class TrackerCog(commands.Cog):
             i18n.t(lang, "tr.title"),
             f"{i18n.t(lang, 'tr.desc')}\n{theme.SEPARATOR}",
             color=theme.GOLD,
-            footer_extra=i18n.t(lang, "tr.refresh", n=REFRESH_MINUTES),
+            footer_extra=(i18n.t(lang, "tr.refresh.one") if REFRESH_MINUTES == 1
+                          else i18n.t(lang, "tr.refresh", n=REFRESH_MINUTES)),
         )
 
         fingerprint_parts: list[str] = []
@@ -93,12 +94,17 @@ class TrackerCog(commands.Cog):
 
     @tasks.loop(minutes=REFRESH_MINUTES)
     async def refresh(self):
-        for guild_id in storage.all_guild_ids():
-            data = storage.load_guild(guild_id)
-            tracker = data.get("tracker")
-            if not tracker:
-                continue
+        try:
+            guild_ids = storage.all_guild_ids()
+        except Exception:
+            log.exception("Lecture des serveurs impossible")
+            return
+        for guild_id in guild_ids:
             try:
+                data = storage.load_guild(guild_id)
+                tracker = data.get("tracker")
+                if not tracker:
+                    continue
                 await self._update_tracker_message(guild_id, data, tracker)
             except Exception:
                 log.exception("Échec d'actualisation du tracker pour %s", guild_id)
@@ -107,8 +113,30 @@ class TrackerCog(commands.Cog):
     async def before_refresh(self):
         await self.bot.wait_until_ready()
 
+    @refresh.error
+    async def refresh_error(self, exc: BaseException):
+        # discord.py arrête la boucle sur exception non gérée : on la relance
+        log.exception("Boucle du tracker interrompue, redémarrage", exc_info=exc)
+        self.refresh.restart()
+
+    async def _resolve_channel(self, channel_id: int):
+        """Salon du tracker : cache d'abord, sinon requête à l'API.
+
+        get_channel() renvoie None pour un salon absent du cache (fil de
+        discussion, salon créé après le démarrage…) : sans ce repli, le
+        tracker cessait de s'actualiser sans le moindre message d'erreur.
+        """
+        channel = self.bot.get_channel(channel_id)
+        if channel is not None:
+            return channel
+        try:
+            return await self.bot.fetch_channel(channel_id)
+        except (discord.NotFound, discord.Forbidden) as exc:
+            log.warning("Salon du tracker %s inaccessible : %s", channel_id, exc)
+            return None
+
     async def _update_tracker_message(self, guild_id: int, data: dict, tracker: dict):
-        channel = self.bot.get_channel(tracker["channel_id"])
+        channel = await self._resolve_channel(tracker["channel_id"])
         if channel is None:
             return
 
@@ -127,6 +155,7 @@ class TrackerCog(commands.Cog):
             log.warning("Permissions manquantes pour le tracker dans %s", guild_id)
             return
         self._last_render[guild_id] = fingerprint
+        log.info("Tracker actualisé pour %s : %s", guild_id, fingerprint.split("|")[0])
 
     # ------------------------------------------------------------------
     # Commandes

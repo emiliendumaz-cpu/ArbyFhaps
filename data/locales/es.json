@@ -80,6 +80,7 @@
  "tr.noperm": "No tengo permiso para enviar mensajes en este canal.",
  "tr.nopred": "*Predicciones no disponibles por ahora.*",
  "tr.refresh": "Se actualiza cada {n} min",
+ "tr.refresh.one": "Se actualiza cada minuto",
  "tr.stopped": "🗑️ Seguimiento detenido",
  "tr.tierset": "✅ {emoji} {node} puntuado {tier}",
  "tr.tierset.desc": "La nota se aplicará en la próxima actualización del seguimiento.",
