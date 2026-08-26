@@ -47,22 +47,47 @@ def _key(build: dict) -> str:
     return build["name"].lower()
 
 
-def _image_path(build: dict) -> Path | None:
-    """Image du build : champ « image » explicite, sinon <slug-du-nom>.<ext>."""
-    candidates = []
-    explicit = build.get("image")
+# Une fiche porte deux captures : les mods et les éclats d'Archonte
+IMAGE_KINDS = {
+    "mods": {"field": "image", "suffix": ""},
+    "eclats": {"field": "image_shards", "suffix": "-eclats"},
+}
+
+
+def _image_stems(build: dict, kind: str) -> list[str]:
+    """Noms de fichier possibles (sans extension), du plus précis au plus général.
+
+    Les deux captures d'une fiche partagent la même racine : si les mods sont
+    dans « cyte-09-shock.png », les éclats sont dans « cyte-09-shock-eclats.png ».
+    """
+    spec = IMAGE_KINDS[kind]
+    stems = []
+    explicit = build.get(spec["field"])
     if explicit:
-        candidates.append(Path(explicit).name)  # jamais de chemin, juste le nom
-    slug = _slug(build["name"])
-    candidates.extend(f"{slug}{ext}" for ext in IMAGE_EXTS)
-    for name in candidates:
-        path = IMAGES_DIR / name
-        if path.is_file():
-            return path
+        stems.append(Path(explicit).stem)  # jamais de chemin, juste le nom
+    base = build.get("image")
+    if base:
+        stems.append(Path(base).stem + spec["suffix"])
+    stems.append(_slug(build["name"]) + spec["suffix"])
+    return list(dict.fromkeys(stems))
+
+
+def _image_path(build: dict, kind: str = "mods") -> Path | None:
+    """Capture du build, cherchée sur chaque nom candidat et chaque extension."""
+    for stem in _image_stems(build, kind):
+        for ext in IMAGE_EXTS:
+            path = IMAGES_DIR / f"{stem}{ext}"
+            if path.is_file():
+                return path
     return None
 
 
-async def _build_embed(build: dict, index: int, total: int, lang: str = "fr") -> tuple[discord.Embed, discord.File | None]:
+def _wants_captures(build: dict) -> bool:
+    """Une fiche de conseils ou de guide n'attend pas de capture de build."""
+    return build.get("category") != "Général" and build.get("variant") != "Guide"
+
+
+async def _build_embed(build: dict, index: int, total: int, lang: str = "fr") -> tuple[list[discord.Embed], list[discord.File]]:
     # Textes rédigés à la main : traduits vers la langue de l'utilisateur
     # (les mods/arcanes sont des noms propres, jamais traduits)
     description = await translate.tr(build["description"], lang)
@@ -79,21 +104,31 @@ async def _build_embed(build: dict, index: int, total: int, lang: str = "fr") ->
         embed.add_field(name=i18n.t(lang, "b.variant"), value=build["variant"], inline=True)
     embed.add_field(name=i18n.t(lang, "b.cat"), value=category, inline=True)
 
-    # Les mods sont portés par la capture d'écran, jamais retranscrits en texte :
-    # elle montre aussi les rangs et les polarités. Tant qu'elle manque, on le dit.
-    path = _image_path(build)
-    if path is None and build.get("category") != "Général":
+    # Mods et éclats sont portés par les captures, jamais retranscrits en texte :
+    # elles montrent aussi rangs, polarités et tauforge. Si elles manquent, on le dit.
+    mods_path = _image_path(build, "mods")
+    shards_path = _image_path(build, "eclats")
+    wants = _wants_captures(build)
+    if mods_path is None and wants:
         embed.add_field(name=i18n.t(lang, "b.mods"), value=i18n.t(lang, "b.mods.pending"), inline=False)
     if build.get("arcanes"):
         embed.add_field(name=i18n.t(lang, "b.arcanes"), value=build["arcanes"], inline=False)
-    if shards:
+    if shards_path is None and shards:
         embed.add_field(name=i18n.t(lang, "b.shards"), value=shards, inline=False)
+    elif shards_path is None and wants:
+        embed.add_field(name=i18n.t(lang, "b.shards"), value=i18n.t(lang, "b.shards.pending"), inline=False)
 
-    file = None
-    if path:
-        file = discord.File(path, filename=path.name)
-        embed.set_image(url=f"attachment://{path.name}")
-    return embed, file
+    embeds, files = [embed], []
+    if mods_path:
+        files.append(discord.File(mods_path, filename=mods_path.name))
+        embed.set_image(url=f"attachment://{mods_path.name}")
+    if shards_path:
+        # Second embed : Discord n'autorise qu'une image par embed
+        shards_embed = theme.make_embed(i18n.t(lang, "b.shards"), color=theme.GOLD)
+        shards_embed.set_image(url=f"attachment://{shards_path.name}")
+        files.append(discord.File(shards_path, filename=shards_path.name))
+        embeds.append(shards_embed)
+    return embeds, files
 
 
 class BuildsPaginator(discord.ui.View):
@@ -114,16 +149,14 @@ class BuildsPaginator(discord.ui.View):
             except discord.HTTPException:
                 pass
 
-    async def current(self) -> tuple[discord.Embed, discord.File | None]:
+    async def current(self) -> tuple[list[discord.Embed], list[discord.File]]:
         return await _build_embed(self.builds[self.index], self.index, len(self.builds), self.lang)
 
     async def _flip(self, interaction: discord.Interaction, step: int):
         self.index = (self.index + step) % len(self.builds)
         await interaction.response.defer()
-        embed, file = await self.current()
-        await interaction.edit_original_response(
-            embed=embed, view=self, attachments=[file] if file else []
-        )
+        embeds, files = await self.current()
+        await interaction.edit_original_response(embeds=embeds, view=self, attachments=files)
 
     @discord.ui.button(label="◀ Précédent", style=discord.ButtonStyle.secondary)
     async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -154,13 +187,12 @@ class BuildsCog(commands.Cog):
         """Une fiche seule, ou un paginateur si plusieurs."""
         await interaction.response.defer(thinking=True)
         if len(builds) == 1:
-            embed, file = await _build_embed(builds[0], 0, 1, lang)
-            await interaction.followup.send(embed=embed, **({"file": file} if file else {}))
+            embeds, files = await _build_embed(builds[0], 0, 1, lang)
+            await interaction.followup.send(embeds=embeds, files=files)
             return
         view = BuildsPaginator(builds, lang)
-        embed, file = await view.current()
-        kwargs = {"file": file} if file else {}
-        view.message = await interaction.followup.send(embed=embed, view=view, wait=True, **kwargs)
+        embeds, files = await view.current()
+        view.message = await interaction.followup.send(embeds=embeds, files=files, view=view, wait=True)
 
     # ------------------------------------------------------------------
     # /build : menu déroulant warframe + variante dépendante
@@ -250,9 +282,18 @@ class BuildsCog(commands.Cog):
     # ------------------------------------------------------------------
 
     @app_commands.command(name="build-image", description="(Admin) Attache une capture d'écran à un build (affichée dans /build).")
-    @app_commands.describe(nom="Nom du build (autocomplétion)", fichier="Capture d'écran (png/jpg/webp, max 8 Mo)")
+    @app_commands.describe(
+        nom="Nom du build (autocomplétion)",
+        fichier="Capture d'écran (png/jpg/webp, max 8 Mo)",
+        type="Ce que montre la capture (mods par défaut)",
+    )
+    @app_commands.choices(type=[
+        app_commands.Choice(name="Mods", value="mods"),
+        app_commands.Choice(name="Éclats d'Archonte", value="eclats"),
+    ])
     @app_commands.default_permissions(manage_guild=True)
-    async def build_image(self, interaction: discord.Interaction, nom: str, fichier: discord.Attachment):
+    async def build_image(self, interaction: discord.Interaction, nom: str,
+                          fichier: discord.Attachment, type: str = "mods"):
         lang = i18n.user_lang(interaction.user.id)
         build = next(
             (b for b in self._all_builds(interaction.guild_id) if b["name"].lower() == nom.lower()),
@@ -277,14 +318,15 @@ class BuildsCog(commands.Cog):
 
         await interaction.response.defer(thinking=True)
         IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-        # Le champ « image » explicite du build prime : on écrit sous ce nom-là
-        target_name = Path(build["image"]).name if build.get("image") else f"{_slug(build['name'])}{ext}"
-        target = IMAGES_DIR / target_name
-        # Purge les anciennes variantes du slug pour éviter les doublons d'extension
-        for old_ext in IMAGE_EXTS:
-            old = IMAGES_DIR / f"{_slug(build['name'])}{old_ext}"
-            if old != target and old.is_file():
-                old.unlink()
+        stems = _image_stems(build, type)
+        target = IMAGES_DIR / f"{stems[0]}{ext}"
+        # Purge les autres noms/extensions du même type, sinon une ancienne
+        # capture continuerait d'être trouvée en priorité
+        for stem in stems:
+            for old_ext in IMAGE_EXTS:
+                old = IMAGES_DIR / f"{stem}{old_ext}"
+                if old != target and old.is_file():
+                    old.unlink()
         await fichier.save(target)
 
         embed = theme.make_embed(

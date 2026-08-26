@@ -38,6 +38,7 @@
  "b.prev": "◀ Forrige",
  "b.removed": "🗑️ Build fjernet: {name}",
  "b.shards": "💎 Archon Shards",
+ "b.shards.pending": "*Skjermbilde mangler — en admin kan legge det til med `/build-image` (type: Archon Shards).*",
  "b.variant": "🎛️ Variant",
  "b.variant.none": "Ingen variant «{variant}» for **{frame}**. Tilgjengelige: {list}",
  "err.title": "❌ Oi",

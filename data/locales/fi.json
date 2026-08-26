@@ -38,6 +38,7 @@
  "b.prev": "◀ Edellinen",
  "b.removed": "🗑️ Build poistettu: {name}",
  "b.shards": "💎 Archon Shardit",
+ "b.shards.pending": "*Kuvakaappaus puuttuu — ylläpitäjä voi lisätä sen komennolla `/build-image` (tyyppi: Archon Shardit).*",
  "b.variant": "🎛️ Variantti",
  "b.variant.none": "Warframelle **{frame}** ei ole varianttia ”{variant}”. Saatavilla: {list}",
  "err.title": "❌ Hups",

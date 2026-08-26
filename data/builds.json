@@ -6,8 +6,7 @@
     "category": "DPS / Guide",
     "description": "Main DPS actuel de la méta Arbitration : cast le 1 puis spam le 2 avec la munition adaptée à la compo.\n• Électrique en général → config **Shock** (Helminth de Volt)\n• Électrique + économie de munitions → config **EM** (Helminth d'efficacité de munition)\n• Explosif → config **Sunder** (augment de Gauss), à jouer avec le Boar\n• Radiation → config **Smite** (Helminth d'Oberon)\n• Gaz → si compo gaz avec Citrine\nStats : ~254 % Force · 215 % Durée · 45 % Efficacité · 34 % Portée.",
     "arcanes": "Arcane Battery, Arcane Sculptor",
-    "shards": "5 éclats d'Archonte jaunes tauforgés : 2× +37,5 % Vitesse d'incantation, 3× +22,5 % Vélocité de parkour",
-    "image": "cyte-09-shards.png"
+    "image_shards": "cyte-09-shards.png"
   },
   {
     "name": "Cyte-09 — Shock (Volt)",
@@ -61,7 +60,6 @@
     "category": "DPS / Support",
     "description": "Prend la place de Vauban sur les **compos gaz**. On cast le BB de l'Helminth de Nokko et on garde le buff actif sur toute la durée de la partie, tout en maintenant le 2 et le 3 actifs.\nStats : 230 % Force · 336 % Durée · 45 % Efficacité · 79 % Portée.",
     "arcanes": "Arcane Concentration, Arcane Bellicose",
-    "shards": "2× +37,5 % Vitesse d'incantation (jaune tauforgé), 2× +22,5 % Vélocité de parkour (jaune tauforgé), 1× +15 % Durée de pouvoir (cramoisi tauforgé)",
     "image": "citrine-arbi-bb.png"
   },
   {

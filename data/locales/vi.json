@@ -38,6 +38,7 @@
  "b.prev": "◀ Trước",
  "b.removed": "🗑️ Đã xóa build: {name}",
  "b.shards": "💎 Archon Shard",
+ "b.shards.pending": "*Chưa có ảnh — quản trị viên có thể thêm bằng `/build-image` (loại: Archon Shard).*",
  "b.variant": "🎛️ Biến thể",
  "b.variant.none": "Không có biến thể “{variant}” cho **{frame}**. Hiện có: {list}",
  "err.title": "❌ Rất tiếc",

@@ -38,6 +38,7 @@
  "b.prev": "◀ Précédent",
  "b.removed": "🗑️ Build supprimé : {name}",
  "b.shards": "💎 Éclats d'Archonte",
+ "b.shards.pending": "*Capture à venir — un admin peut l'ajouter avec `/build-image` (type : Éclats d'Archonte).*",
  "b.variant": "🎛️ Variante",
  "b.variant.none": "Pas de variante « {variant} » pour **{frame}**. Disponibles : {list}",
  "err.title": "❌ Oups",

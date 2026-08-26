@@ -38,6 +38,7 @@
  "b.prev": "◀ Precedente",
  "b.removed": "🗑️ Build rimossa: {name}",
  "b.shards": "💎 Frammenti di Arconte",
+ "b.shards.pending": "*Screenshot mancante — un amministratore può aggiungerlo con `/build-image` (tipo: Frammenti di Arconte).*",
  "b.variant": "🎛️ Variante",
  "b.variant.none": "Nessuna variante «{variant}» per **{frame}**. Disponibili: {list}",
  "err.title": "❌ Ops",

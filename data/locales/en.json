@@ -38,6 +38,7 @@
  "b.prev": "◀ Previous",
  "b.removed": "🗑️ Build removed: {name}",
  "b.shards": "💎 Archon Shards",
+ "b.shards.pending": "*Screenshot pending — an admin can add it with `/build-image` (type: Archon Shards).*",
  "b.variant": "🎛️ Variant",
  "b.variant.none": "No “{variant}” variant for **{frame}**. Available: {list}",
  "err.title": "❌ Oops",

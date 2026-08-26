@@ -38,6 +38,7 @@
  "b.prev": "◀ Föregående",
  "b.removed": "🗑️ Build borttagen: {name}",
  "b.shards": "💎 Archon Shards",
+ "b.shards.pending": "*Skärmbild saknas — en administratör kan lägga till den med `/build-image` (typ: Archon Shards).*",
  "b.variant": "🎛️ Variant",
  "b.variant.none": "Ingen variant ”{variant}” för **{frame}**. Tillgängliga: {list}",
  "err.title": "❌ Hoppsan",
